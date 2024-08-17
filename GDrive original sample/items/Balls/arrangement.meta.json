@@ -1,0 +1,17 @@
+{
+  "content": [
+    {
+      "type": "explorer.variation",
+      "preview": false,
+      "url": "./Default/",
+      "name": "default"
+    },
+    {
+      "type": "explorer.variation",
+      "preview": false,
+      "url": "./Easter/",
+      "name": "easter"
+    }
+  ],
+  "previous_breadcrumbs": []
+}

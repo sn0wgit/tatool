@@ -3,21 +3,19 @@ import json
 from os.path import isfile
 from os.path import join
 
-def main(LANGUAGES:list[str], ARCHIVE_PATH:str) -> None:
-    """Processes `.meta` files"""
+READ_ONLY:str = "r"
+CREATE_FILE:str = 'w'
 
-    URL_PREFIX:str = "/"
-    READ_ONLY:str = "r"
-    CREATE_FILE:str = 'w'
-    TARGET_ARCHIVE_FOLDER_NAME:str = "/GDrive original sample/items"
+def compile(CURRENT_DIRECTORY:str, ARCHIVE_PATH:str, LANGUAGES:list[str]) -> None:
 
-    current_directory:str = ARCHIVE_PATH
-    directory_contents:list = sorted([c for c in os.listdir(current_directory)])
+    directory_contents:list[str] = sorted([c for c in os.listdir(CURRENT_DIRECTORY)])
 
-    print("Current directory:", current_directory.replace(ARCHIVE_PATH, URL_PREFIX))
-    print("Entry list:", directory_contents, end="\nEntry info:\n")
+    print("Current directory:", CURRENT_DIRECTORY.replace(ARCHIVE_PATH, "")+"/")
 
     current_arrangement_json:dict = {"content": [], "previous_breadcrumbs": []}
+    current_dictionary_example:dict = {}
+    for language in LANGUAGES:
+        current_dictionary_example.update({language: {}})
     current_dictionary_json:dict = {}
     for language in LANGUAGES:
         current_dictionary_json.update({language: {}})
@@ -26,8 +24,8 @@ def main(LANGUAGES:list[str], ARCHIVE_PATH:str) -> None:
 
         arrangement_for_current_entry = {}
 
-        if isfile(join(current_directory, content)) and content.endswith(".meta"):
-            current_metafile:dict = json.loads(open(join(current_directory, content), READ_ONLY).read())
+        if isfile(join(CURRENT_DIRECTORY, content)) and content.endswith(".meta"):
+            current_metafile:dict = json.loads(open(join(CURRENT_DIRECTORY, content), READ_ONLY).read())
 
             type_from_metafile:str = current_metafile["type"]
             arrangement_for_current_entry.update({"type": type_from_metafile})
@@ -45,39 +43,41 @@ def main(LANGUAGES:list[str], ARCHIVE_PATH:str) -> None:
 
             current_arrangement_json["content"].append(arrangement_for_current_entry)
 
-    print(str(current_arrangement_json)\
-        .replace( "}, ",                         "},\n  " )\
-        .replace( "'content': [",                "'content': [\n  " )\
-        .replace( "'}],",                        "'}\n]," )\
-        .replace( ", 'previous_breadcrumbs': [", ",\n'previous_breadcrumbs': [" )[1:][:-1],\
-        end="\n\n"\
-    )
+    if current_arrangement_json != {"content": [], "previous_breadcrumbs": []}:
 
-    print("Translations: \n"+str(current_dictionary_json)\
-        .replace("': {", "': {\n  ")\
-        .replace("', '", "',\n  '")\
-        .replace("'}, '", "'\n},\n'")\
-        .replace("}}", "}\n}")\
-        .replace("{'", "{\n'")\
-    )
-
-    current_arrangement_file = open(join(current_directory, "arrangement.meta.json"), CREATE_FILE)
-    json.dump(current_arrangement_json, current_arrangement_file, indent=2, ensure_ascii=False)
-    current_arrangement_file.close()
-    print('"arrangement.meta.json" created!')
-
-    for language in current_dictionary_json.keys():
-        current_translation_file = open(join(current_directory, language+".meta.json"), CREATE_FILE)
-        json.dump(current_dictionary_json[language], current_translation_file, indent=2, ensure_ascii=False)
+        current_arrangement_file = open(join(CURRENT_DIRECTORY, "arrangement.meta.json"), CREATE_FILE)
+        json.dump(current_arrangement_json, current_arrangement_file, indent=2, ensure_ascii=False)
         current_arrangement_file.close()
-        print(f'"{language}.meta.json" created!')
 
-    """
-    origin_folders = sorted([c for c in os.listdir(current_directory) if os.path.isdir(join(current_directory, c))])
-    print("Folders:", origin_folders)
-    for folder in origin_folders:
-        print(f'Opening folder "{folder}"')
-    """
+        print(f'"{CURRENT_DIRECTORY.replace(ARCHIVE_PATH, "")}/arrangement.meta.json" created!')
+
+    if current_dictionary_json != current_dictionary_example:
+        for language in current_dictionary_json.keys():
+
+            current_translation_file = open(join(CURRENT_DIRECTORY, language+".meta.json"), CREATE_FILE)
+            json.dump(current_dictionary_json[language], current_translation_file, indent=2, ensure_ascii=False)
+            current_arrangement_file.close()
+
+            print(f'"{CURRENT_DIRECTORY.replace(ARCHIVE_PATH, "")}/{language}.meta.json" created!')
+
+    for directory in sorted([d for d in os.listdir(CURRENT_DIRECTORY) if os.path.isdir(join(CURRENT_DIRECTORY, d))]):
+        compile(join(CURRENT_DIRECTORY, directory), ARCHIVE_PATH, LANGUAGES)
+
+def main(LANGUAGES:list[str], ARCHIVE_PATH:str) -> None:
+    """Processes `.meta` files"""
+
+    current_directory:str = ARCHIVE_PATH
+
+    last_directory:str = ARCHIVE_PATH
+    while True:
+        archive_inner_folders = sorted([d for d in os.listdir(last_directory) if os.path.isdir(join(last_directory, d))])
+        if archive_inner_folders != []:
+            last_directory = join(last_directory, archive_inner_folders[-1])
+        else: 
+            break
+    print("Last directory:", last_directory)
+
+    compile(ARCHIVE_PATH, ARCHIVE_PATH, LANGUAGES)
 
 if __name__ == "__main__":
     print('Use "main.py"!')

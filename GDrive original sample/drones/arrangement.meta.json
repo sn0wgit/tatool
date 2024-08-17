@@ -1,0 +1,11 @@
+{
+  "content": [
+    {
+      "type": "explorer.item",
+      "preview": false,
+      "url": "./Miner/",
+      "name": "miner"
+    }
+  ],
+  "previous_breadcrumbs": []
+}

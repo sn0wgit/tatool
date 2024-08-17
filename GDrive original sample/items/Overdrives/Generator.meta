@@ -1,7 +1,11 @@
 {
-    "type": "explorer.variation",
-    "namei18n": "generator",
-    "targetName": "Generator",
-    "enName": "Protective Shield Generator",
-    "ruName": "Купол"
+  "type": "explorer.item",
+  "namei18n": "generator",
+  "enName": "Protective Shield Generator",
+  "enDesc": "Titan overdrive",
+  "ruName": "Генератор купола",
+  "ruDesc": "Овердрайв титана",
+  "targetName": "Generator",
+  "preview": false,
+  "url": "./Generator/"
 }

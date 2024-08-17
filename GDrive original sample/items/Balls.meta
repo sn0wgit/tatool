@@ -1,1 +1,11 @@
-{"type": "explorer.item", "namei18n": "balls", "enName": "Balls", "enDesc": "", "ruName": "Мячи", "ruDesc": "", "targetName": "Balls", "preview": false, "url": "./Balls/"}
+{
+  "type": "explorer.item",
+  "namei18n": "balls",
+  "enName": "Balls",
+  "enDesc": "",
+  "ruName": "Мячи",
+  "ruDesc": "",
+  "targetName": "Balls",
+  "preview": false,
+  "url": "./Balls/"
+}

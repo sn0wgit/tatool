@@ -1,7 +1,11 @@
 {
-    "type": "explorer.variation",
-    "namei18n": "generator",
-    "targetName": "Generator",
-    "enName": "N2-Bomb",
-    "ruName": "N2-бомба"
+  "type": "explorer.item",
+  "namei18n": "bomb",
+  "enName": "N2-Bomb",
+  "enDesc": "Wasp overdrive",
+  "ruName": "N2-бомба",
+  "ruDesc": "Овердрайв васпа",
+  "targetName": "Bomb",
+  "preview": false,
+  "url": "./Bomb/"
 }

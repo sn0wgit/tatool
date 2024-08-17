@@ -1,0 +1,11 @@
+{
+  "type": "explorer.variation",
+  "namei18n": "kargo",
+  "enName": "Kargo-drone",
+  "enDesc": "Used for supplies delivery on maps",
+  "ruName": "Каргодрон",
+  "ruDesc": "Используется для доставки припасов на карты",
+  "targetName": "Kargo",
+  "preview": false,
+  "url": "./Kargo/"
+}
