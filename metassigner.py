@@ -59,7 +59,7 @@ def update(entry_path:str, entry_name:str, LANGUAGES:list[str]) -> bool:
     if write_agreement:
 
         metafile = open(entry_path+".meta", CREATE_FILE)
-        metafile.write(json.dumps(metadata))
+        json.dump(metadata, metafile, indent=2, ensure_ascii=False)
         metafile.close()
         
         print(f'"{entry_name}.meta" created!')
