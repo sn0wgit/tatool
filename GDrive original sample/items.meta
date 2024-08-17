@@ -1,7 +1,1 @@
-{
-    "type": "explorer.folder",
-    "namei18n": "items",
-    "targetName": "items",
-    "enName": "Items",
-    "ruName": "Предметы"
-}
+{"type": "explorer.folder", "namei18n": "items", "enName": "Items", "enDesc": "", "ruName": "\u041f\u0440\u0435\u0434\u043c\u0435\u0442\u044b", "ruDesc": "", "targetName": "items", "preview": false, "url": "./items/"}

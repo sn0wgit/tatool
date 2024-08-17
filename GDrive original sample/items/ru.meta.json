@@ -1,1 +1,8 @@
-{"balls": "Мячи", "drones": "Дроны", "flags": "Флаги", "meteorites": "Метеориты", "mines": "Мины", "overdrives": "Овердрайвы"}
+{
+  "balls": "Мячи",
+  "drones": "Дроны",
+  "flags": "Флаги",
+  "meteorites": "Метеориты",
+  "mines": "Мины",
+  "overdrives": "Овердрайвы"
+}

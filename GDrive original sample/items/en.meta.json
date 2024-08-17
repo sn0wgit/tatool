@@ -1,1 +1,8 @@
-{"balls": "Balls", "drones": "Drones", "flags": "Flags", "meteorites": "Meteorites", "mines": "Mines", "overdrives": "Overdrives"}
+{
+  "balls": "Balls",
+  "drones": "Drones",
+  "flags": "Flags",
+  "meteorites": "Meteorites",
+  "mines": "Mines",
+  "overdrives": "Overdrives"
+}

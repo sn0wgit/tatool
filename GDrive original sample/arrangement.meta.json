@@ -1,0 +1,17 @@
+{
+  "content": [
+    {
+      "type": "explorer.folder",
+      "preview": false,
+      "url": "./drones/",
+      "name": "drones"
+    },
+    {
+      "type": "explorer.folder",
+      "preview": false,
+      "url": "./items/",
+      "name": "items"
+    }
+  ],
+  "previous_breadcrumbs": []
+}

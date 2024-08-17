@@ -3,19 +3,18 @@ import json
 from os.path import isfile
 from os.path import join
 
-def main(LANGUAGES:list[str]) -> None:
+def main(LANGUAGES:list[str], ARCHIVE_PATH:str) -> None:
     """Processes `.meta` files"""
 
     URL_PREFIX:str = "/"
     READ_ONLY:str = "r"
     CREATE_FILE:str = 'w'
     TARGET_ARCHIVE_FOLDER_NAME:str = "/GDrive original sample/items"
-    ORIGIN_DIRECTORY:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
 
-    current_directory:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
+    current_directory:str = ARCHIVE_PATH
     directory_contents:list = sorted([c for c in os.listdir(current_directory)])
 
-    print("Current directory:", current_directory.replace(ORIGIN_DIRECTORY, URL_PREFIX))
+    print("Current directory:", current_directory.replace(ARCHIVE_PATH, URL_PREFIX))
     print("Entry list:", directory_contents, end="\nEntry info:\n")
 
     current_arrangement_json:dict = {"content": [], "previous_breadcrumbs": []}
@@ -63,13 +62,13 @@ def main(LANGUAGES:list[str]) -> None:
     )
 
     current_arrangement_file = open(join(current_directory, "arrangement.meta.json"), CREATE_FILE)
-    current_arrangement_file.write(json.dumps(current_arrangement_json))
+    json.dump(current_arrangement_json, current_arrangement_file, indent=2, ensure_ascii=False)
     current_arrangement_file.close()
     print('"arrangement.meta.json" created!')
 
     for language in current_dictionary_json.keys():
         current_translation_file = open(join(current_directory, language+".meta.json"), CREATE_FILE)
-        current_translation_file.write(json.dumps(current_dictionary_json[language]))
+        json.dump(current_dictionary_json[language], current_translation_file, indent=2, ensure_ascii=False)
         current_arrangement_file.close()
         print(f'"{language}.meta.json" created!')
 

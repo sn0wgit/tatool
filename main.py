@@ -18,7 +18,7 @@ mode = ""
 
 while mode != MODES[-1]:
     mode = inquirer.select( # type: ignore
-        message="== Select mode ==\n",
+        message="Select mode\n",
         choices=MODES,
     ).execute()
 
@@ -26,4 +26,4 @@ while mode != MODES[-1]:
         metassigner.main(LANGUAGES, ARCHIVE_PATH)
 
     elif mode == MODES[1]:
-        compiler.main(LANGUAGES)
+        compiler.main(LANGUAGES, ARCHIVE_PATH)
