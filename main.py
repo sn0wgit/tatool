@@ -1,7 +1,8 @@
 import metassigner
+import compiler
 from InquirerPy import inquirer
 
-MODES = ["Metadata assigner", "EXIT"]
+MODES = ["Metadata assigner", "Compile", "EXIT"]
 LANGUAGES = ["en", "ru"]
 mode = ""
 
@@ -13,3 +14,6 @@ while mode != MODES[-1]:
 
     if mode == MODES[0]:
         metassigner.main(LANGUAGES)
+
+    elif mode == MODES[1]:
+        compiler.main(LANGUAGES)

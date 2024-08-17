@@ -1,147 +1,84 @@
 import os
 import json
-from os.path import isdir
 from os.path import isfile
 from os.path import join
-"""
-class Directory():
-    def __init__(self, name, url):
-        self.name = name
-        self.files = []
-        self.directories = []
-        self.url = url
 
-    def add_file(self, file):
-        self.files.append(file)
+def main(LANGUAGES:list[str]) -> None:
+    """Processes `.meta` files"""
 
-    def add_directory(self, directory):
-        self.directories.append(directory)
+    URL_PREFIX:str = "/"
+    READ_ONLY:str = "r"
+    CREATE_FILE:str = 'w'
+    TARGET_ARCHIVE_FOLDER_NAME:str = "/GDrive original sample/items"
+    ORIGIN_DIRECTORY:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
 
-class Category(Directory):
-    def __init__(self, url, name):
-        super().__init__(name)
-        self.type = "CATEGORY"
-        self.url = url
+    current_directory:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
+    directory_contents:list = sorted([c for c in os.listdir(current_directory)])
 
-class Item(Directory):
-    def __init__(self, url, name):
-        super().__init__(name)
-        self.type = "ITEM"
-        self.url = url
+    print("Current directory:", current_directory.replace(ORIGIN_DIRECTORY, URL_PREFIX))
+    print("Entry list:", directory_contents, end="\nEntry info:\n")
 
-class File():
-    def __init__(self, name, url):
-        self.name = name
-        self.type = "UNKNOWN"
-        self.url = url
+    current_arrangement_json:dict = {"content": [], "previous_breadcrumbs": []}
+    current_dictionary_json:dict = {}
+    for language in LANGUAGES:
+        current_dictionary_json.update({language: {}})
 
-class PNG(File):
-    def __init__(self, name, url, res):
-        super().__init__(name)
-        self.type = "PNG"
-        self.url = url
-        self.res = res
+    for content in directory_contents:
 
-class JPG(File):
-    def __init__(self, name, url, res):
-        super().__init__(name)
-        self.type = "JPG"
-        self.url = url
-        self.res = res
+        arrangement_for_current_entry = {}
 
-class SVG(File):
-    def __init__(self, name, url, viewbox):
-        super().__init__(name)
-        self.type = "SVG"
-        self.url = url
-        self.viewbox = viewbox
+        if isfile(join(current_directory, content)) and content.endswith(".meta"):
+            current_metafile:dict = json.loads(open(join(current_directory, content), READ_ONLY).read())
 
-class ThreeDS(File):
-    def __init__(self, name, url):
-        super().__init__(name)
-        self.type = "3DS"
-        self.url = url
+            type_from_metafile:str = current_metafile["type"]
+            arrangement_for_current_entry.update({"type": type_from_metafile})
 
-class A3D(File):
-    def __init__(self, name, url):
-        super().__init__(name)
-        self.type = "A3D"
-        self.url = url
-"""
-URL_PREFIX:str = "/"
-READ_ONLY:str = "r"
-CREATE_FILE:str = 'w'
-TARGET_ARCHIVE_FOLDER_NAME:str = "/GDrive original sample/items"
-ORIGIN_DIRECTORY:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
+            preview_from_metafile:str = current_metafile["preview"]
+            arrangement_for_current_entry.update({"preview": preview_from_metafile})
 
-current_directory:str = os.getcwd()+TARGET_ARCHIVE_FOLDER_NAME
-origin_contents:list = sorted([c for c in os.listdir(current_directory)])
+            URL_from_metafile:str = current_metafile["url"]
+            arrangement_for_current_entry.update({"url": URL_from_metafile})
 
-print("Current directory:", current_directory.replace(ORIGIN_DIRECTORY, URL_PREFIX))
-print("Entry list:", origin_contents, end="\nEntry info:\n")
-
-current_arrangement_json:dict = {"content": [], "previous_breadcrumbs": []}
-current_dictionary_json:dict = {"ru": {}, "en": {}}
-
-for content in origin_contents:
-
-    current_arrangement_json_content:dict = {}
-
-    if isdir(join(current_directory, content)):
-        (current_arrangement_json_content.update({"type":"ITEM"})) if (content[0].upper() == content[0]) else (current_arrangement_json_content.update({"type":"CATEGORY"}))
-        current_arrangement_json_content.update({"preview":False})
-        current_arrangement_json_content.update({"url":"./"+content+"/"})
-        current_arrangement_json["content"].append(current_arrangement_json_content)
-
-    if isfile(join(current_directory, content)):
-        if content.endswith(".meta"):
-            current_meta_file:dict = json.loads(open(join(current_directory, content), READ_ONLY).read())
-            TYPE_FROM_META:str = current_meta_file["type"]
-            NAME_FROM_META:str = current_meta_file["namei18n"]
-            """Append type to content from meta"""
-            for appended_content in current_arrangement_json["content"]:
-                if appended_content["url"][:-1][2:] == current_meta_file["targetName"]:
-                    appended_content["type"] = TYPE_FROM_META
-                    appended_content["name"] = NAME_FROM_META
+            namei18n_from_metafile:str = current_metafile["namei18n"]
+            arrangement_for_current_entry.update({"name": namei18n_from_metafile})
             for language in current_dictionary_json.keys():
-                current_dictionary_json[language][NAME_FROM_META] = current_meta_file[language+"Name"]
+                current_dictionary_json[language][namei18n_from_metafile] = current_metafile[language+"Name"]
 
-        elif content != "arrangement.json" and content != "ru.json" and content != "en.json":
-            if content.endswith(".png"):
-                current_arrangement_json_content.update({"type":"PNG"})
-            elif content.endswith((".jpg", ".jpeg")):
-                current_arrangement_json_content.update({"type":"JPG"})
-            elif content.endswith(".svg"):
-                current_arrangement_json_content.update({"type":"SVG"})
-            elif content.endswith(".3ds"):
-                current_arrangement_json_content.update({"type":"3DS"})
-            elif content.endswith(".a3d"):
-                current_arrangement_json_content.update({"type":"A3D"})
-            else:
-                current_arrangement_json_content.update({"type":"UNKNOWN"})
-                
-            current_arrangement_json_content.update({"preview":"./"+content})
-            current_arrangement_json_content.update({"url":"./"+content+"/"})
-            current_arrangement_json["content"].append(current_arrangement_json_content)
+            current_arrangement_json["content"].append(arrangement_for_current_entry)
 
-print(str(current_arrangement_json)\
-    .replace( "}, ",                         "},\n  " )\
-    .replace( "'content': [",                "'content': [\n  " )\
-    .replace( "'}],",                        "'}\n]," )\
-    .replace( ", 'previous_breadcrumbs': [", ",\n'previous_breadcrumbs': [" )[1:][:-1],\
-    end="\n\n"\
-)
-print("Translations: \n"+str(current_dictionary_json).replace("': {", "': {\n  ").replace("', '", "',\n  '").replace("'}, '", "'\n},\n'").replace("}}", "}\n}").replace("{'", "{\n'"))
-current_arrangement_file = open(join(current_directory, "arrangement.meta.json"), CREATE_FILE)
-current_arrangement_file.write(str(current_arrangement_json).replace("'", '"').replace("False", 'false').replace("True", 'true'))
-current_arrangement_file.close()
-for language in current_dictionary_json.keys():
-    current_translation_file = open(join(current_directory, language+".meta.json"), CREATE_FILE)
-    current_translation_file.write(str(current_dictionary_json[language]).replace("'", '"'))
+    print(str(current_arrangement_json)\
+        .replace( "}, ",                         "},\n  " )\
+        .replace( "'content': [",                "'content': [\n  " )\
+        .replace( "'}],",                        "'}\n]," )\
+        .replace( ", 'previous_breadcrumbs': [", ",\n'previous_breadcrumbs': [" )[1:][:-1],\
+        end="\n\n"\
+    )
+
+    print("Translations: \n"+str(current_dictionary_json)\
+        .replace("': {", "': {\n  ")\
+        .replace("', '", "',\n  '")\
+        .replace("'}, '", "'\n},\n'")\
+        .replace("}}", "}\n}")\
+        .replace("{'", "{\n'")\
+    )
+
+    current_arrangement_file = open(join(current_directory, "arrangement.meta.json"), CREATE_FILE)
+    current_arrangement_file.write(str(current_arrangement_json).replace("'", '"').replace("False", 'false').replace("True", 'true'))
     current_arrangement_file.close()
-    
-origin_folders = sorted([c for c in os.listdir(current_directory) if os.path.isdir(join(current_directory, c))])
-print("Folders:", origin_folders)
+    print('"arrangement.meta.json" created!')
 
-for folder in origin_folders:
-    print(f'Opening folder "{folder}"')
+    for language in current_dictionary_json.keys():
+        current_translation_file = open(join(current_directory, language+".meta.json"), CREATE_FILE)
+        current_translation_file.write(str(current_dictionary_json[language]).replace("'", '"'))
+        current_arrangement_file.close()
+        print(f'"{language}.meta.json" created!')
+
+    """
+    origin_folders = sorted([c for c in os.listdir(current_directory) if os.path.isdir(join(current_directory, c))])
+    print("Folders:", origin_folders)
+    for folder in origin_folders:
+        print(f'Opening folder "{folder}"')
+    """
+
+if __name__ == "__main__":
+    print('Use "main.py"!')

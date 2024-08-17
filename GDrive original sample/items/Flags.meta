@@ -1,7 +1,1 @@
-{
-    "type": "explorer.item",
-    "namei18n": "flags",
-    "targetName": "Flags",
-    "enName": "Flags",
-    "ruName": "Флаги"
-}
+{"type": "explorer.item", "namei18n": "flags", "enName": "Flags", "enDesc": "", "ruName": "Флаги", "ruDesc": "", "targetName": "Flags", "preview": false, "url": "./Flags/"}

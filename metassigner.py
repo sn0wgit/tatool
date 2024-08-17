@@ -18,7 +18,10 @@ def update(entry_path:str, entry_name:str, languages:list[str]) -> None:
     ).execute()
     metadata.update({"type": entry_type})
 
-    unique_name = inquirer.text(message="== Input unique name (for translations) ==\nInput:").execute() # type: ignore
+    unique_name = inquirer.text( # type: ignore
+        message="== Input unique name (for translations) ==\nInput:",
+        default=entry_name.lower()
+    ).execute()
     metadata.update({"namei18n": unique_name})
 
     for language in languages:
@@ -50,11 +53,18 @@ def update(entry_path:str, entry_name:str, languages:list[str]) -> None:
 
     metadata.update({"url": "./"+entry_name+"/"})
 
-    metafile = open(entry_path+".meta", CREATE_FILE)
-    metafile.write(str(metadata).replace("'", '"').replace("False", 'false').replace("True", 'true'))
-    metafile.close()
-    
-    print(f'"{entry_name}.meta" created!')
+    write_agreement = inquirer.confirm(message="Confirm?").execute() # type: ignore
+
+    if write_agreement:
+
+        metafile = open(entry_path+".meta", CREATE_FILE)
+        metafile.write(str(metadata).replace("'", '"').replace("False", 'false').replace("True", 'true'))
+        metafile.close()
+        
+        print(f'"{entry_name}.meta" created!')
+
+    else: 
+        print("Denied by user!")
 
 def selection(current_directory:str, languages:list[str]) -> None:
     origin_entries = sorted([c for c in os.listdir(current_directory) if (not (c.endswith(".meta") or c.endswith(".meta") or c.endswith(".meta.json")))])
@@ -77,3 +87,6 @@ def selection(current_directory:str, languages:list[str]) -> None:
 
 def main(languages:list[str]):
     selection(join(os.getcwd(), "GDrive original sample", "items"), languages)
+
+if __name__ == "__main__":
+    print('Use "main.py"!')

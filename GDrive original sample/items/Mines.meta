@@ -1,7 +1,1 @@
-{
-    "type": "explorer.item",
-    "namei18n": "mines",
-    "targetName": "Mines",
-    "enName": "Mines",
-    "ruName": "Мины"
-}
+{"type": "explorer.item", "namei18n": "mines", "enName": "Mines", "enDesc": "", "ruName": "Мины", "ruDesc": "", "targetName": "Mines", "preview": false, "url": "./Mines/"}

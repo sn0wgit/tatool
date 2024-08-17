@@ -1,7 +1,1 @@
-{
-    "type": "explorer.item",
-    "namei18n": "meteorites",
-    "targetName": "Meteorites",
-    "enName": "Meteorites",
-    "ruName": "Метеориты"
-}
+{"type": "explorer.item", "namei18n": "meteorites", "enName": "Meteorites", "enDesc": "", "ruName": "Метеориты", "ruDesc": "", "targetName": "Meteorites", "preview": false, "url": "./Meteorites/"}

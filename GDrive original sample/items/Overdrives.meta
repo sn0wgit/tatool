@@ -1,7 +1,1 @@
-{
-    "type": "explorer.item",
-    "namei18n": "overdrives",
-    "targetName": "Overdrives",
-    "enName": "Overdrives",
-    "ruName": "Овердрайвы"
-}
+{"type": "explorer.item", "namei18n": "overdrives", "enName": "Overdrives", "enDesc": "", "ruName": "Овердрайвы", "ruDesc": "", "targetName": "Overdrives", "preview": false, "url": "./Overdrives/"}
