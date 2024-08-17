@@ -63,13 +63,13 @@ def main(LANGUAGES:list[str]) -> None:
     )
 
     current_arrangement_file = open(join(current_directory, "arrangement.meta.json"), CREATE_FILE)
-    current_arrangement_file.write(str(current_arrangement_json).replace("'", '"').replace("False", 'false').replace("True", 'true'))
+    current_arrangement_file.write(json.dumps(current_arrangement_json))
     current_arrangement_file.close()
     print('"arrangement.meta.json" created!')
 
     for language in current_dictionary_json.keys():
         current_translation_file = open(join(current_directory, language+".meta.json"), CREATE_FILE)
-        current_translation_file.write(str(current_dictionary_json[language]).replace("'", '"'))
+        current_translation_file.write(json.dumps(current_dictionary_json[language]))
         current_arrangement_file.close()
         print(f'"{language}.meta.json" created!')
 
