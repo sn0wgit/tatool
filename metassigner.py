@@ -2,29 +2,30 @@ import os
 from os.path import join
 from os.path import isdir
 from os.path import isfile
+from tarfile import LNKTYPE
 from InquirerPy import inquirer
 
 CREATE_FILE:str = 'w'
-EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
+EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.folder', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
 DIR_ACTIONS = ["Open folder", "Update metadata"]
 
-def update(entry_path:str, entry_name:str, languages:list[str]) -> None:
-    """Updates selected entry metadata"""
+def update(entry_path:str, entry_name:str, LANGUAGES:list[str]) -> bool:
+    """Updates selected entry metadata. Returns if update is success"""
     metadata = {}
-    
+
     entry_type = inquirer.select( # type: ignore
-        message="== Select entry type ==\n",
+        message="Select entry type\n",
         choices=EXPLORER_TYPES,
     ).execute()
     metadata.update({"type": entry_type})
 
     unique_name = inquirer.text( # type: ignore
-        message="== Input unique name (for translations) ==\nInput:",
+        message="Input unique name (for translations)\nInput:",
         default=entry_name.lower()
     ).execute()
     metadata.update({"namei18n": unique_name})
 
-    for language in languages:
+    for language in LANGUAGES:
         print(f"== Current language: {language} ==")
 
         name_in_current_language = inquirer.text(message="= Input name =\nInput:").execute() # type: ignore
@@ -36,10 +37,9 @@ def update(entry_path:str, entry_name:str, languages:list[str]) -> None:
     metadata.update({"targetName": entry_name})
 
     if isdir(entry_path):
-        print("== Select preview ==\n0: NO PREVIEW")
         legal_subentries = [entry for entry in os.listdir(entry_path) if isfile(join(entry_path, entry)) and (not (entry.endswith(".meta")) or not (entry.endswith(".meta.json")))]
         preview_selection = inquirer.select( # type: ignore
-            message="== Select entry type ==\n",
+            message="Select entry type\n",
             choices=["NO PREVIEW"]+legal_subentries,
         ).execute()
         preview_value:bool|str = False if (preview_selection == "NO PREVIEW") else preview_selection
@@ -62,31 +62,61 @@ def update(entry_path:str, entry_name:str, languages:list[str]) -> None:
         metafile.close()
         
         print(f'"{entry_name}.meta" created!')
+        return True
 
     else: 
         print("Denied by user!")
+        return False
 
-def selection(current_directory:str, languages:list[str]) -> None:
-    origin_entries = sorted([c for c in os.listdir(current_directory) if (not (c.endswith(".meta") or c.endswith(".meta") or c.endswith(".meta.json")))])
-    entry_selected = inquirer.select( # type: ignore
-        message="== Select entry ==\n",
-        choices=["GO UP"]+origin_entries,
-    ).execute()
-    entry_selected_path = join(current_directory, entry_selected)
-    if isdir(entry_selected_path):
-        action_select = inquirer.select( # type: ignore
-            message="== Select action ==\n",
-            choices=DIR_ACTIONS,
+def update_iterator(ENTRY_SELECTED:str, ENTRY_SELECTED_NAME:str, LANGUAGES:list[str]) -> bool:
+
+    update_current_entry_again:bool = True
+
+    while update_current_entry_again:
+        update_iteration = update(ENTRY_SELECTED, ENTRY_SELECTED_NAME, LANGUAGES)
+
+        if update_iteration:
+            update_current_entry_again = False
+
+            return inquirer.confirm(message="Continue in this mode?").execute() # type: ignore
+
+        else:
+            update_current_entry_again = inquirer.confirm(message="Try again?").execute() # type: ignore
+
+            if not update_current_entry_again:
+                update_current_entry_again = False
+                return inquirer.confirm(message="Continue in this mode?").execute() # type: ignore
+
+def selection(LANGUAGES:list[str], current_path:str) -> None:
+
+    continue_selection:bool = True
+
+    while continue_selection:
+
+        entry_selected = inquirer.filepath( # type: ignore
+            message="Select entry\n",
+            default=current_path,
+            validate=lambda path: os.path.abspath(path).startswith(current_path+"/") and not path.endswith(".meta") and not path.endswith(".meta.json"),
+            invalid_message="Error: selection is outside of archive or is metafile",
+            filter=lambda result: os.path.abspath(result),
         ).execute()
-        if action_select == DIR_ACTIONS[0]:
-            selection(entry_selected_path, languages)
-        elif action_select == DIR_ACTIONS[1]:
-            update(entry_selected_path, entry_selected, languages)
-    else: 
-        update(entry_selected_path, entry_selected, languages)
+        
+        entry_selected_name = os.path.basename(entry_selected)
+        
+        if isdir(entry_selected):
+            action_select = inquirer.select( # type: ignore
+                message="Select action\n",
+                choices=DIR_ACTIONS,
+            ).execute()
+            if action_select == DIR_ACTIONS[0]:
+                current_path = entry_selected
+            elif action_select == DIR_ACTIONS[1]:
+                continue_selection = update_iterator(entry_selected, entry_selected_name, LANGUAGES)
+        else: 
+            continue_selection = update_iterator(entry_selected, entry_selected_name, LANGUAGES)
 
-def main(languages:list[str]):
-    selection(join(os.getcwd(), "GDrive original sample", "items"), languages)
+def main(LANGUAGES:list[str], ARCHIVE_PATH:str):
+    selection(LANGUAGES, ARCHIVE_PATH)
 
 if __name__ == "__main__":
     print('Use "main.py"!')
