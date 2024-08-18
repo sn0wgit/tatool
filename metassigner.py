@@ -3,16 +3,21 @@ import json
 from os.path import join
 from os.path import isdir
 from os.path import isfile
-from tarfile import LNKTYPE
 from InquirerPy import inquirer
 
 CREATE_FILE:str = 'w'
+READ_FILE:str = 'r'
 EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.folder', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
 DIR_ACTIONS = ["Open folder", "Update metadata"]
 
 def update(entry_path:str, entry_name:str, LANGUAGES:list[str]) -> bool:
     """Updates selected entry metadata. Returns if update is success"""
+
     metadata = {}
+    if os.access(entry_path+".meta", os.R_OK):
+        metafile = open(entry_path+".meta", READ_FILE)
+        print("File already exists! File content:\n", metafile.read())
+        metafile.close()
 
     entry_type = inquirer.select( # type: ignore
         message="Select entry type\n",
@@ -57,8 +62,6 @@ def update(entry_path:str, entry_name:str, LANGUAGES:list[str]) -> bool:
     write_agreement = inquirer.confirm(message="Confirm?").execute() # type: ignore
 
     if write_agreement:
-
-        metafile = open(entry_path+".meta", CREATE_FILE)
         json.dump(metadata, metafile, indent=2, ensure_ascii=False)
         metafile.close()
         
@@ -66,6 +69,7 @@ def update(entry_path:str, entry_name:str, LANGUAGES:list[str]) -> bool:
         return True
 
     else: 
+        metafile.close()
         print("Denied by user!")
         return False
 
