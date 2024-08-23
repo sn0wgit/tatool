@@ -4,7 +4,7 @@
   "enName": "Protective Shield Generator",
   "enDesc": "Titan overdrive",
   "ruName": "Генератор купола",
-  "ruDesc": "Овердрайв титана",
+  "ruDesc": "Овердрайв Титана",
   "targetName": "Generator",
   "preview": false,
   "url": "./Generator/"

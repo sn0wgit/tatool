@@ -1,1 +1,11 @@
-{"type": "explorer.item", "namei18n": "drones", "enName": "Drones", "enDesc": "", "ruName": "Дроны", "ruDesc": "", "targetName": "Drones", "preview": false, "url": "./Drones/"}
+{
+  "type": "explorer.folder",
+  "namei18n": "drones",
+  "enName": "Drones",
+  "enDesc": "",
+  "ruName": "Дроны",
+  "ruDesc": "",
+  "targetName": "Drones",
+  "preview": false,
+  "url": "./Drones/"
+}

@@ -5,7 +5,6 @@ from os.path import isdir
 from os.path import isfile
 from InquirerPy import inquirer
 
-CREATE_FILE:str = 'w'
 READ_FILE:str = 'r'
 EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.folder', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
 DIR_ACTIONS = ["Open folder", "Update metadata"]
