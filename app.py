@@ -14,13 +14,17 @@ class DataInfoWidget(QWidget):
         self.rootPath = ""
         self.metaFile = None
         self.LANGS = ["en", "ru"]
-        self.EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.folder', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
+        self.EXPLORER_TYPES = ['explorer.folder', 'explorer.item', 'explorer.variation', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.webp', 'explorer.a3d', 'explorer.3ds']
         self.currentLanguage = ""
         self.metaFileData:dict = {}
         self.metaFileDataEdited:dict = {}
 
         self.form = QFormLayout()
         self.setLayout(self.form)
+
+        self.saveButton = QPushButton("Save")
+        self.saveButton.setDisabled(True)
+        self.saveButton.clicked.connect(self.saveButtonClickHandler)
 
         self.previewLabel = QLabel("Preview:")
         self.previewButton = QPushButton("Select file...")
@@ -30,6 +34,10 @@ class DataInfoWidget(QWidget):
         self.typeSelection = QComboBox()
         self.typeSelection.currentIndexChanged.connect(self.typeChangeHandler)
         self.form.addRow(self.typeLabel, self.typeSelection)
+        for type in self.EXPLORER_TYPES:
+            self.typeSelection.addItem(type)
+        self.typeSelection.addItem("")
+        self.typeSelection.setCurrentText("")
 
         self.i18nnameLabel = QLabel("i18nName:")
         self.i18nnameInput = QLineEdit()
@@ -49,10 +57,6 @@ class DataInfoWidget(QWidget):
         self.descInput = QLineEdit()
         self.descInput.textChanged.connect(self.descriptionChangeHandler)
         self.form.addRow(self.descLabel, self.descInput)
-
-        self.saveButton = QPushButton("Save")
-        self.saveButton.setDisabled(True)
-        self.saveButton.clicked.connect(self.saveButtonClickHandler)
         self.form.addWidget(self.saveButton)
 
         self.setDisabled(True)
@@ -100,52 +104,75 @@ class DataInfoWidget(QWidget):
         self.metaFileDataEdited.update({self.currentLanguage+"Desc": self.descInput.text()})
         self.enableSaveButton()
 
+    def predictDataType(self) -> None:
+        if os.path.isdir(self.currentPath):
+            self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.folder"))
+
+        elif os.path.isfile(self.currentPath):
+            if self.currentPath.endswith(".png"):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.png"))
+
+            elif self.currentPath.endswith((".jpeg", ".jpg")):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.jpg"))
+                
+            elif self.currentPath.endswith(".svg"):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.svg"))
+                
+            elif self.currentPath.endswith(".webp"):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.webp"))
+                
+            elif self.currentPath.endswith(".a3d"):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.a3d"))
+                
+            elif self.currentPath.endswith(".3ds"):
+                self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.3ds"))
+
+            else:
+                if self.typeSelection.count() == len(self.EXPLORER_TYPES):
+                    self.typeSelection.addItem("")
+                    self.typeSelection.setCurrentText("")
+
     def setMetaFile(self) -> None:
         """Updates metadata (depends of selected data)"""
-        if self.typeSelection.count() == 0:
-            for type in self.EXPLORER_TYPES:
-                self.typeSelection.addItem(type)
         if self.currentLanguageSelection.count() == 0:
+
             for lang in self.LANGS:
                 self.currentLanguageSelection.addItem(lang)
+
             self.currentLanguage = self.LANGS[0]
             
         if os.access(self.currentPath+".meta", os.R_OK):
             """File opening and overwriting current metadata, based on data from metafile"""
             self.metaFile = open(self.currentPath+".meta", "r")
             metaFileText = self.metaFile.read()
+            self.metaFile.close()
 
             try:
                 self.metaFileData = json.loads(metaFileText)
                 self.metaFileDataEdited = json.loads(metaFileText)
 
             except:
-                print("File is not valid JSON")
-                QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: File is not valid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
+                print("Unavaiable to get metadata!\nReason: Metafile is invalid JSON")
+                QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: Metafile is invalid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
 
                 self.metaFileData = {}
                 self.metaFileDataEdited = {}
+                self.predictDataType()
 
-            self.i18nnameInput.setText(self.metaFileData.get("namei18n", ""))
-            self.typeSelection.setCurrentText(self.metaFileData.get("type", ""))
+            self.i18nnameInput.setText(self.metaFileData.get("namei18n", os.path.basename(self.currentPath)))
+            self.typeSelection.setCurrentText(self.metaFileData.get("type"))
 
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
-
-            self.setLanguageDependedDatas()
-
-            self.metaFile.close()
 
         else: 
             """Cleaning of metadata, because it is unavailable to open metafile or it does not exist"""
             self.metaFile = None
             self.metaFileData = {}
             self.metaFileDataEdited = {}
-            self.metaFileLangs = []
-            if self.typeSelection.count() == len(self.EXPLORER_TYPES):
-                self.typeSelection.addItem("")
-                self.typeSelection.setCurrentText("")
+            self.predictDataType()
             self.i18nnameInput.setText(os.path.basename(self.currentPath))
-            self.setLanguageDependedDatas()
+
+        self.setLanguageDependedDatas()
 
     def setCurrentPath(self, path:str) -> None:
         """Updates path for currently selected data.
@@ -163,7 +190,7 @@ class DataInfoWidget(QWidget):
         """
         self.rootPath = path
 
-    def setDisabled(self, exp:bool):
+    def setDisabled(self, exp:bool) -> None:
         """Updates avaiability of inputs (except of "Save" button).
 
         :param bool exp: Negation of enablity ─ if `False`, then enabled, if `True`, then disabled.
@@ -175,14 +202,14 @@ class DataInfoWidget(QWidget):
         self.nameInput.setDisabled(exp)
         self.descInput.setDisabled(exp)
 
-    def enableSaveButton(self):
+    def enableSaveButton(self) -> None:
         """Enables save button (if it is possible)"""
         if self.typeSelection.currentText() != "" and self.metaFileDataEdited != self.metaFileData:
             self.saveButton.setDisabled(False)
         else:
             self.saveButton.setDisabled(True)
 
-    def saveButtonClickHandler(self):
+    def saveButtonClickHandler(self) -> None:
         """Updates metadata on user inputed"""
         metafile = open(self.currentPath+".meta", "w")
         json.dump(self.metaFileDataEdited, metafile, indent=2, ensure_ascii=False) # type: ignore
@@ -297,7 +324,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(self.dataEditorPage, "Data Editor")
         self.tab_widget.insertTab(1, self.compilerPage, "Compiler")
 
-    def onOpenArchiveButtonClick(self):
+    def onOpenArchiveButtonClick(self) -> None:
         """Archive folder selection handler"""
         self.rootPath = QFileDialog.getExistingDirectory()
 
