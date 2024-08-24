@@ -3,7 +3,7 @@ import os
 import json
 from PyQt6.QtCore import QSize, QModelIndex
 from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit, QMessageBox
 
 class DataInfoWidget(QWidget):
     """Widget for metadata editing"""
@@ -114,12 +114,25 @@ class DataInfoWidget(QWidget):
             """File opening and overwriting current metadata, based on data from metafile"""
             self.metaFile = open(self.currentPath+".meta", "r")
             self.metaFileText = self.metaFile.read()
-            self.metaFileData = json.loads(self.metaFileText)
-            self.metaFileDataEdited = json.loads(self.metaFileText)
+
+            try:
+                self.metaFileData = json.loads(self.metaFileText)
+                self.metaFileDataEdited = json.loads(self.metaFileText)
+
+            except:
+                print("File is not valid JSON")
+                error = QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: File is not valid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
+
+                self.metaFileData = {}
+                self.metaFileDataEdited = {}
+
             self.i18nnameInput.setText(self.metaFileData.get("namei18n", ""))
             self.typeSelection.setCurrentText(self.metaFileData.get("type", ""))
+
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
+
             self.setLanguageDependedDatas()
+
             self.metaFile.close()
 
         else: 
