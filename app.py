@@ -28,6 +28,7 @@ class DataInfoWidget(QWidget):
 
         self.previewLabel = QLabel("Preview:")
         self.previewButton = QPushButton("Select file...")
+        self.previewButton.clicked.connect(self.updatePreviewImage)
         self.form.addRow(self.previewLabel, self.previewButton)
 
         self.typeLabel = QLabel("Type:")
@@ -61,8 +62,29 @@ class DataInfoWidget(QWidget):
 
         self.setDisabled(True)
 
-    def updateMetaFileData(self, data:dict) -> None:
-        self.metaFileData = dict(data) # avoids of variable implification instead of value implification
+    def updatePreviewImage(self) -> None:
+        """Updates preview file. If rejected, then no preview image (`None`)"""
+        sourceSelectionHandler = QFileDialog.getOpenFileName(
+                parent=self,
+                directory=self.currentPath,
+                filter="Images (*.jpeg *.jpg *.png *.svg *.webp)"
+            )[0] or None
+        
+        if sourceSelectionHandler != None:
+            preview = os.path.relpath(
+                sourceSelectionHandler,
+                start=self.currentPath
+            )
+
+            if os.path.isdir(self.currentPath):
+                preview = "./"+preview
+
+        else:
+            preview = None
+
+        self.metaFileDataEdited.update({"preview": preview})
+
+        self.enableSaveButton()
 
     def typeChangeHandler(self) -> None:
         """Updates new selected data type and removes empty data type, if previously data type was unselected (empty)"""
@@ -131,6 +153,9 @@ class DataInfoWidget(QWidget):
                 if self.typeSelection.count() == len(self.EXPLORER_TYPES):
                     self.typeSelection.addItem("")
                     self.typeSelection.setCurrentText("")
+
+    def updateMetaFileData(self, data:dict) -> None:
+        self.metaFileData = dict(data) # avoids of variable implification instead of value implification
 
     def setMetaFile(self) -> None:
         """Updates metadata (depends of selected data)"""
@@ -301,7 +326,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("TO#A™ Archive Tool") # Заголовок окна
+        self.setWindowTitle("TATool") # Заголовок окна
         self.setFixedSize(QSize(800, 600)) # Размер окна
         self.rootPath = ""
 

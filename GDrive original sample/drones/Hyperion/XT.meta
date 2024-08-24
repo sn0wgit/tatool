@@ -1,0 +1,9 @@
+{
+  "type": "explorer.variation",
+  "namei18n": "XT",
+  "preview": "./preview [high 1].png",
+  "enName": "Hyperion XT",
+  "enDesc": "Special drone. Consumes more supplies than the default.",
+  "ruName": "Гиперион XT",
+  "ruDesc": "Специальный дрон. Потребляет больше припасов, чем обычный."
+}
