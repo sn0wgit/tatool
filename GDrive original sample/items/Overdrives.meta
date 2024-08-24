@@ -1,1 +1,11 @@
-{"type": "explorer.item", "namei18n": "overdrives", "enName": "Overdrives", "enDesc": "", "ruName": "Овердрайвы", "ruDesc": "", "targetName": "Overdrives", "preview": false, "url": "./Overdrives/"}
+{
+  "type": "explorer.item",
+  "namei18n": "overdrives",
+  "enName": "Overdrives",
+  "enDesc": "In-game mechanics",
+  "ruName": "Овердрайвы",
+  "ruDesc": "Внутриигровая механика",
+  "targetName": "Overdrives",
+  "preview": false,
+  "url": "./Overdrives/"
+}

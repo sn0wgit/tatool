@@ -6,6 +6,7 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit
 
 class DataInfoWidget(QWidget):
+    """Widget for metadata editing"""
     def __init__(self):
         super().__init__()
 
@@ -16,6 +17,7 @@ class DataInfoWidget(QWidget):
         self.EXPLORER_TYPES = ['explorer.variation', 'explorer.item', 'explorer.folder', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.a3d', 'explorer.3ds']
         self.currentLanguage = ""
         self.metaFileData:dict = {}
+        self.metaFileDataEdited:dict = {}
 
         self.form = QFormLayout()
         self.setLayout(self.form)
@@ -31,6 +33,7 @@ class DataInfoWidget(QWidget):
 
         self.i18nnameLabel = QLabel("i18nName:")
         self.i18nnameInput = QLineEdit()
+        self.i18nnameInput.textChanged.connect(self.i18nNameChangeHandler)
         self.form.addRow(self.i18nnameLabel, self.i18nnameInput)
 
         self.currentLanguageSelection = QComboBox()
@@ -39,37 +42,66 @@ class DataInfoWidget(QWidget):
 
         self.nameLabel = QLabel("Name:")
         self.nameInput = QLineEdit()
+        self.nameInput.textChanged.connect(self.nameChangeHandler)
         self.form.addRow(self.nameLabel, self.nameInput)
 
         self.descLabel = QLabel("Description:")
         self.descInput = QLineEdit()
+        self.descInput.textChanged.connect(self.descriptionChangeHandler)
         self.form.addRow(self.descLabel, self.descInput)
 
         self.saveButton = QPushButton("Save")
         self.saveButton.setDisabled(True)
+        self.saveButton.clicked.connect(self.saveButtonClickHandler)
         self.form.addWidget(self.saveButton)
 
         self.setDisabled(True)
 
+    def updateMetaFileData(self, data:dict) -> None:
+        self.metaFileData = dict(data) # avoids of variable implification instead of value implification
+
     def typeChangeHandler(self) -> None:
+        """Updates new selected data type and removes empty data type, if previously data type was unselected (empty)"""
         if self.typeSelection.currentText() != "":
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
+            self.enableSaveButton()
+        self.metaFileDataEdited.update({"type": self.typeSelection.currentText()})
+
+    def i18nNameChangeHandler(self) -> None:
+        """Updates new inputed data i18n name"""
+        self.metaFileDataEdited.update({"namei18n": self.i18nnameInput.text()})
+        self.enableSaveButton()
 
     def currentLanguageChangeHandler(self) -> None:
+        """Updates data, if user changes current viewing language"""
         self.currentLanguage = self.currentLanguageSelection.currentText()
         self.setLanguageDependedDatas()
 
     def setLanguageDependedDatas(self) -> None:
+        """Updates data, which depends of language"""
         self.setDataName()
         self.setDataDesc()
 
     def setDataName(self) -> None:
-        self.nameInput.setText(self.metaFileData.get(self.currentLanguage+"Name", ""))
+        """Updates data name (depends of language)"""
+        self.nameInput.setText(self.metaFileDataEdited.get(self.currentLanguage+"Name", ""))
+
+    def nameChangeHandler(self) -> None:
+        """Updates new inputed data name on selected language"""
+        self.metaFileDataEdited.update({self.currentLanguage+"Name": self.nameInput.text()})
+        self.enableSaveButton()
 
     def setDataDesc(self) -> None:
-        self.descInput.setText(self.metaFileData.get(self.currentLanguage+"Desc", ""))
+        """Updates data description (depends of language)"""
+        self.descInput.setText(self.metaFileDataEdited.get(self.currentLanguage+"Desc", ""))
+
+    def descriptionChangeHandler(self) -> None:
+        """Updates new inputed data description on selected language"""
+        self.metaFileDataEdited.update({self.currentLanguage+"Desc": self.descInput.text()})
+        self.enableSaveButton()
 
     def setMetaFile(self) -> None:
+        """Updates metadata (depends of selected data)"""
         if self.typeSelection.count() == 0:
             for type in self.EXPLORER_TYPES:
                 self.typeSelection.addItem(type)
@@ -79,7 +111,7 @@ class DataInfoWidget(QWidget):
             self.currentLanguage = self.LANGS[0]
             
         if os.access(self.currentPath+".meta", os.R_OK):
-            print("Accessing", self.currentPath+".meta")
+            """File opening and overwriting current metadata, based on data from metafile"""
             self.metaFile = open(self.currentPath+".meta", "r")
             self.metaFileText = self.metaFile.read()
             self.metaFileData = json.loads(self.metaFileText)
@@ -91,25 +123,38 @@ class DataInfoWidget(QWidget):
             self.metaFile.close()
 
         else: 
-            self.metaFile = None
+            """Cleaning of metadata, because it is unavailable to open metafile or it does not exist"""
+            self.metaFile = open(self.currentPath+".meta", "w")
             self.metaFileData = {}
             self.metaFileDataEdited = {}
             self.metaFileLangs = []
-            self.i18nnameInput.setText("")
             if self.typeSelection.count() == len(self.EXPLORER_TYPES):
                 self.typeSelection.addItem("")
                 self.typeSelection.setCurrentText("")
+            self.i18nnameInput.setText(os.path.basename(self.currentPath))
             self.setLanguageDependedDatas()
 
-    def setCurrentPath(self, path) -> None:
+    def setCurrentPath(self, path:str) -> None:
+        """Updates path for currently selected data.
+
+        :param str path: Absolute path to currently selected data.
+        """
         self.currentPath = os.path.join(self.rootPath, path)
         self.setMetaFile()
         self.setDisabled(False)
 
-    def setRootPath(self, path) -> None:
+    def setRootPath(self, path:str) -> None:
+        """Updates archive root path.
+
+        :param str path: Absolute path to archive root.
+        """
         self.rootPath = path
 
     def setDisabled(self, exp:bool):
+        """Updates avaiability of inputs (except of "Save" button).
+
+        :param bool exp: Negation of enablity ─ if `False`, then enabled, if `True`, then disabled.
+        """
         self.previewButton.setDisabled(exp)
         self.typeSelection.setDisabled(exp)
         self.i18nnameInput.setDisabled(exp)
@@ -117,7 +162,22 @@ class DataInfoWidget(QWidget):
         self.nameInput.setDisabled(exp)
         self.descInput.setDisabled(exp)
 
+    def enableSaveButton(self):
+        """Enables save button (if it is possible)"""
+        if self.typeSelection.currentText() != "" and self.metaFileDataEdited != self.metaFileData:
+            self.saveButton.setDisabled(False)
+        else:
+            self.saveButton.setDisabled(True)
+
+    def saveButtonClickHandler(self):
+        metafile = open(self.currentPath+".meta", "w")
+        json.dump(self.metaFileDataEdited, metafile, indent=2, ensure_ascii=False) # type: ignore
+        metafile.close()
+        self.updateMetaFileData(self.metaFileDataEdited)
+        self.saveButton.setDisabled(True)
+
 class DataTree(QTreeView):
+    """Archive tree-like representation"""
     def __init__(self, dataEditor: DataInfoWidget):
         super().__init__()
 
@@ -126,9 +186,17 @@ class DataTree(QTreeView):
         self.setHeaderHidden(True)
 
     def setRootPath(self, path) -> None:
+        """Updates archive root path.
+
+        :param str path: Absolute path to archive root.
+        """
         self.rootPath = path
 
     def setDataPath(self, path) -> None:
+        """Updates path for currently selected data.
+
+        :param str path: Absolute path to currently selected data.
+        """
         self.dataEditor.setCurrentPath(path)
 
     def currentChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
@@ -140,6 +208,7 @@ class DataTree(QTreeView):
             self.setDataPath(self.allPaths)
 
 class DataEditorPage(QWidget):
+    """Data editor tab"""
     def __init__(self):
         super().__init__()
         
@@ -160,10 +229,14 @@ class DataEditorPage(QWidget):
         layout.addWidget(self.files, 0, 0, 0, 1)
 
     def setRootPath(self, path) -> None:
+        """Method for root path updates.
+
+        :param str path: Absolute path to archive root."""
         self.files.setRootPath(path) # Root update for tree
         self.dataEditor.setRootPath(path) # Root update for data editor
 
 class CompilerPage(QWidget):
+    """Compiler tab"""
     def __init__(self):
         super().__init__()
 
@@ -183,6 +256,7 @@ class CompilerPage(QWidget):
         self.layout_.addWidget(self.compileLogs, 0)
 
 class MainWindow(QMainWindow):
+    """Application window"""
     def __init__(self):
         super().__init__()
 
@@ -210,9 +284,15 @@ class MainWindow(QMainWindow):
         self.tab_widget.insertTab(1, self.compilerPage, "Compiler")
 
     def onOpenArchiveButtonClick(self):
+        """Archive folder selection handler"""
         self.rootPath = QFileDialog.getExistingDirectory()
 
         def appendNonMeta(path:str, parent:QStandardItemModel|QStandardItem) -> None:
+            """Loop method to get all archive data, except of `.meta` and `.meta.json` files
+            
+            :param str path: Absolute parent path.
+            :param QStandardItemModel|QStandardItem parent: Parent item (or item model, like root of all items).
+            """
             dataNames = [data for data in os.listdir(path) if (os.path.isdir(os.path.join(path, data)) or (os.path.isfile(os.path.join(path, data)) and not data.endswith((".meta", ".meta.json"))))]
             for dataName in dataNames:
                 dataObject = QStandardItem(dataName)
@@ -222,7 +302,6 @@ class MainWindow(QMainWindow):
                 parent.appendRow(dataObject)
 
         if self.rootPath != "": 
-            print(self.rootPath)
             appendNonMeta(self.rootPath, self.dataEditorPage.model) # Fills tree
             self.dataEditorPage.setRootPath(self.rootPath) # Updates root path
 

@@ -1,4 +1,4 @@
-import json
+import json.tool
 jsontext = """{
   "type": "explorer.folder",
   "namei18n": "drones",
@@ -10,5 +10,7 @@ jsontext = """{
   "preview": false,
   "url": "./drones/"
 }"""
-
-print(json.loads(jsontext))
+try:
+  print(json.loads(jsontext))
+except:
+  print("oops")
