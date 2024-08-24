@@ -113,15 +113,15 @@ class DataInfoWidget(QWidget):
         if os.access(self.currentPath+".meta", os.R_OK):
             """File opening and overwriting current metadata, based on data from metafile"""
             self.metaFile = open(self.currentPath+".meta", "r")
-            self.metaFileText = self.metaFile.read()
+            metaFileText = self.metaFile.read()
 
             try:
-                self.metaFileData = json.loads(self.metaFileText)
-                self.metaFileDataEdited = json.loads(self.metaFileText)
+                self.metaFileData = json.loads(metaFileText)
+                self.metaFileDataEdited = json.loads(metaFileText)
 
             except:
                 print("File is not valid JSON")
-                error = QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: File is not valid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
+                QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: File is not valid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
 
                 self.metaFileData = {}
                 self.metaFileDataEdited = {}
@@ -137,7 +137,7 @@ class DataInfoWidget(QWidget):
 
         else: 
             """Cleaning of metadata, because it is unavailable to open metafile or it does not exist"""
-            self.metaFile = open(self.currentPath+".meta", "w")
+            self.metaFile = None
             self.metaFileData = {}
             self.metaFileDataEdited = {}
             self.metaFileLangs = []
@@ -183,6 +183,7 @@ class DataInfoWidget(QWidget):
             self.saveButton.setDisabled(True)
 
     def saveButtonClickHandler(self):
+        """Updates metadata on user inputed"""
         metafile = open(self.currentPath+".meta", "w")
         json.dump(self.metaFileDataEdited, metafile, indent=2, ensure_ascii=False) # type: ignore
         metafile.close()
