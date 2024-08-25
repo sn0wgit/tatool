@@ -1,14 +1,65 @@
 import sys
 import os
-from os.path import isfile, isdir, relpath, basename, join
+from os.path import isfile, isdir, relpath, abspath, basename, join
 import json
-from PyQt6.QtCore import QSize, QModelIndex
-from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction
+from PyQt6.QtSvgWidgets import QSvgWidget
+from PyQt6.QtCore import QSize, QModelIndex, Qt
+from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit, QMessageBox
+
+class PreviewWidget(QWidget):
+    """Widget for preview viewing"""
+    def __init__(self):
+        super().__init__()
+
+        self.layout_ = QVBoxLayout()
+        self.layout_.setAlignment(Qt.AlignmentFlag.AlignBottom)
+        self.setLayout(self.layout_)
+
+        self.currentPreviewPath = ""
+        self.currentPreview = None
+        self.currentPreviewSVG = None
+        self.currentPreviewImage = QLabel()
+        self.currentPreviewImage.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.currentPreviewLabel = QLabel(basename(self.currentPreviewPath))
+        self.currentPreviewLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.currentPreviewImage.setHidden(True)
+        self.layout_.addWidget(self.currentPreviewSVG)
+        self.layout_.addWidget(self.currentPreviewImage)
+        self.layout_.addWidget(self.currentPreviewLabel)
+
+    def setPreviewPath(self, path:str|None):
+        """Updates preview absolute path
+        
+        :param str path: Absolute path to the preview file"""
+        self.currentPreviewPath = path
+        if self.currentPreviewPath != None:
+            self.currentPreviewLabel.setText(basename(self.currentPreviewPath))
+            if self.currentPreviewPath.endswith(".svg"):
+                self.currentPreviewImage.setHidden(True)
+                self.currentPreviewSVG = QSvgWidget(self.currentPreviewPath, self)
+                self.currentPreviewSVG.adjustSize()
+                self.currentPreviewSVG.setStyleSheet("margin: auto;")
+                self.currentPreviewSVG.setHidden(False)
+
+            else:
+                if isinstance(self.currentPreviewSVG, QSvgWidget):
+                    self.currentPreviewSVG.setHidden(True)
+                self.currentPreview = QPixmap(self.currentPreviewPath)
+                self.currentPreviewImage.setPixmap(self.currentPreview)
+                self.currentPreviewImage.setHidden(False)
+        
+        else:
+            if isinstance(self.currentPreviewSVG, QSvgWidget):
+                self.currentPreviewSVG.setHidden(True)
+            self.currentPreviewImage.setHidden(True)
+            self.currentPreviewLabel.setText("No preview provided")
 
 class DataInfoWidget(QWidget):
     """Widget for metadata editing"""
-    def __init__(self):
+    def __init__(self, previewWidget:PreviewWidget):
         super().__init__()
 
         self.currentPath = ""
@@ -19,6 +70,7 @@ class DataInfoWidget(QWidget):
         self.currentLanguage = ""
         self.metaFileData:dict = {}
         self.metaFileDataEdited:dict = {}
+        self.previewWidget = previewWidget
 
         self.form = QFormLayout()
         self.setLayout(self.form)
@@ -65,20 +117,23 @@ class DataInfoWidget(QWidget):
 
     def updatePreviewImage(self) -> None:
         """Updates preview file. If rejected, then no preview image (`None`)"""
-        sourceSelectionHandler = QFileDialog.getOpenFileName(
+        absolutePreviewPath = QFileDialog.getOpenFileName(
                 parent=self,
                 directory=self.currentPath,
                 filter="Images (*.jpeg *.jpg *.png *.svg *.webp)"
             )[0] or None
         
-        if sourceSelectionHandler != None:
+        if absolutePreviewPath != None:
+            PreviewWidget.setPreviewPath(self.previewWidget, absolutePreviewPath)
             preview = relpath(
-                sourceSelectionHandler,
+                absolutePreviewPath,
                 start=self.currentPath
             )
 
             if isdir(self.currentPath):
                 preview = "./"+preview
+        
+            
 
         else:
             preview = None
@@ -189,7 +244,6 @@ class DataInfoWidget(QWidget):
 
             self.i18nnameInput.setText(self.metaFileData.get("namei18n", basename(self.currentPath)))
             self.typeSelection.setCurrentText(self.metaFileData.get("type"))
-
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
 
         else: 
@@ -199,6 +253,21 @@ class DataInfoWidget(QWidget):
             self.metaFileDataEdited = {}
             self.predictDataType()
             self.i18nnameInput.setText(basename(self.currentPath))
+
+        os.chdir(self.currentPath)
+        if self.metaFileData.get("preview", None) != False and self.metaFileData.get("preview", None) != None:
+            PreviewWidget.setPreviewPath(
+                self.previewWidget,
+                abspath(
+                    self.metaFileData.get("preview", "") if not self.metaFileData.get("preview", "").startswith("./") else self.metaFileData.get("preview", "")[2:]
+                )
+            )
+            
+        else:
+            PreviewWidget.setPreviewPath(
+                self.previewWidget,
+                None
+            )
 
         self.setLanguageDependedDatas()
 
@@ -280,9 +349,9 @@ class DataTree(QTreeView):
                 self.dataEditor.forceSave()
 
         def getAllPaths(current: QModelIndex) -> str:
-            return join(getAllPaths(current.parent()), current.data()) if str(type(current.parent().data())) == "<class 'str'>" else current.data()
+            return join(getAllPaths(current.parent()), current.data()) if isinstance(current.parent().data(), str) else current.data()
             
-        if str(type(current.parent().data())) == "<class 'str'>" or str(type(current.data())) == "<class 'str'>":
+        if isinstance(current.parent().data(), str) or isinstance(current.data(), str):
             self.allPaths = getAllPaths(current)
             self.setDataPath(self.allPaths)
 
@@ -294,10 +363,9 @@ class DataEditorPage(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
 
-        self.preview = QLabel("Preview")
-        self.preview.setStyleSheet("border: 1px solid rgba(255,255,255,0.25);")
+        self.preview = PreviewWidget()
 
-        self.dataEditor = DataInfoWidget()
+        self.dataEditor = DataInfoWidget(self.preview)
 
         self.files = DataTree(self.dataEditor)
         self.model = QStandardItemModel()
@@ -344,23 +412,23 @@ class MainWindow(QMainWindow):
         self.rootPath = ""
 
         menu = self.menuBar()
-        if menu != None: file_menu = menu.addMenu("&File") # Первый дроплист верхнего бара
+        if menu != None: fileMenu = menu.addMenu("&File") # Первый дроплист верхнего бара
 
-        open_archive_button = QAction("&Open archive", self) # Первая кнопка первого дроплиста из верхнего бара
-        open_archive_button.setStatusTip("Select archive root folder") # Описание для статусбара
-        open_archive_button.triggered.connect(self.onOpenArchiveButtonClick) # Дефинирование обработчика нажатий
+        openArchiveButton = QAction("&Open archive", self) # Первая кнопка первого дроплиста из верхнего бара
+        openArchiveButton.setStatusTip("Select archive root folder") # Описание для статусбара
+        openArchiveButton.triggered.connect(self.onOpenArchiveButtonClick) # Дефинирование обработчика нажатий
 
         self.setStatusBar(QStatusBar(self)) # Статусбар (внизу)
-        if file_menu != None: file_menu.addAction(open_archive_button) # Добавление первой кнопки
+        if fileMenu != None: fileMenu.addAction(openArchiveButton) # Добавление первой кнопки
 
         self.dataEditorPage = DataEditorPage()
         self.compilerPage = CompilerPage()
 
-        self.tab_widget = QTabWidget(self)
-        self.tab_widget.move(0, 19)
-        self.tab_widget.resize(800, 561)
-        self.tab_widget.addTab(self.dataEditorPage, "Data Editor")
-        self.tab_widget.insertTab(1, self.compilerPage, "Compiler")
+        self.tabWidget = QTabWidget(self)
+        self.tabWidget.move(0, 19)
+        self.tabWidget.resize(800, 561)
+        self.tabWidget.addTab(self.dataEditorPage, "Data Editor")
+        self.tabWidget.insertTab(1, self.compilerPage, "Compiler")
 
     def onOpenArchiveButtonClick(self) -> None:
         """Archive folder selection handler"""
