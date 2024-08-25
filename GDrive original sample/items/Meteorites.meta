@@ -1,1 +1,11 @@
-{"type": "explorer.item", "namei18n": "meteorites", "enName": "Meteorites", "enDesc": "", "ruName": "Метеориты", "ruDesc": "", "targetName": "Meteorites", "preview": false, "url": "./Meteorites/"}
+{
+  "type": "explorer.item",
+  "namei18n": "meteorites",
+  "enName": "Meteorites",
+  "enDesc": "Gold box special mechanics for events",
+  "ruName": "Метеориты",
+  "ruDesc": "Специальная механика золотых ящиков для ивентов",
+  "targetName": "Meteorites",
+  "preview": false,
+  "url": "./Meteorites/"
+}

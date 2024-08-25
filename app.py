@@ -1,5 +1,6 @@
 import sys
 import os
+from os.path import isfile, isdir, relpath, basename, join
 import json
 from PyQt6.QtCore import QSize, QModelIndex
 from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction
@@ -24,7 +25,7 @@ class DataInfoWidget(QWidget):
 
         self.saveButton = QPushButton("Save")
         self.saveButton.setDisabled(True)
-        self.saveButton.clicked.connect(self.saveButtonClickHandler)
+        self.saveButton.clicked.connect(self.forceSave)
 
         self.previewLabel = QLabel("Preview:")
         self.previewButton = QPushButton("Select file...")
@@ -71,12 +72,12 @@ class DataInfoWidget(QWidget):
             )[0] or None
         
         if sourceSelectionHandler != None:
-            preview = os.path.relpath(
+            preview = relpath(
                 sourceSelectionHandler,
                 start=self.currentPath
             )
 
-            if os.path.isdir(self.currentPath):
+            if isdir(self.currentPath):
                 preview = "./"+preview
 
         else:
@@ -91,7 +92,9 @@ class DataInfoWidget(QWidget):
         if self.typeSelection.currentText() != "":
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
             self.enableSaveButton()
-        self.metaFileDataEdited.update({"type": self.typeSelection.currentText()})
+
+            if self.typeSelection.count() == self.EXPLORER_TYPES:
+                self.metaFileDataEdited.update({"type": self.typeSelection.currentText()})
 
     def i18nNameChangeHandler(self) -> None:
         """Updates new inputed data i18n name"""
@@ -127,10 +130,10 @@ class DataInfoWidget(QWidget):
         self.enableSaveButton()
 
     def predictDataType(self) -> None:
-        if os.path.isdir(self.currentPath):
+        if isdir(self.currentPath):
             self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.folder"))
 
-        elif os.path.isfile(self.currentPath):
+        elif isfile(self.currentPath):
             if self.currentPath.endswith(".png"):
                 self.typeSelection.setCurrentText(self.metaFileData.get("type", "explorer.png"))
 
@@ -184,7 +187,7 @@ class DataInfoWidget(QWidget):
                 self.metaFileDataEdited = {}
                 self.predictDataType()
 
-            self.i18nnameInput.setText(self.metaFileData.get("namei18n", os.path.basename(self.currentPath)))
+            self.i18nnameInput.setText(self.metaFileData.get("namei18n", basename(self.currentPath)))
             self.typeSelection.setCurrentText(self.metaFileData.get("type"))
 
             self.typeSelection.removeItem(len(self.EXPLORER_TYPES))
@@ -195,7 +198,7 @@ class DataInfoWidget(QWidget):
             self.metaFileData = {}
             self.metaFileDataEdited = {}
             self.predictDataType()
-            self.i18nnameInput.setText(os.path.basename(self.currentPath))
+            self.i18nnameInput.setText(basename(self.currentPath))
 
         self.setLanguageDependedDatas()
 
@@ -204,7 +207,7 @@ class DataInfoWidget(QWidget):
 
         :param str path: Absolute path to currently selected data.
         """
-        self.currentPath = os.path.join(self.rootPath, path)
+        self.currentPath = join(self.rootPath, path)
         self.setMetaFile()
         self.setDisabled(False)
 
@@ -234,13 +237,17 @@ class DataInfoWidget(QWidget):
         else:
             self.saveButton.setDisabled(True)
 
-    def saveButtonClickHandler(self) -> None:
+    def forceSave(self) -> None:
         """Updates metadata on user inputed"""
         metafile = open(self.currentPath+".meta", "w")
         json.dump(self.metaFileDataEdited, metafile, indent=2, ensure_ascii=False) # type: ignore
         metafile.close()
         self.updateMetaFileData(self.metaFileDataEdited)
         self.saveButton.setDisabled(True)
+
+    def isNewMetaDataSaved(self) -> bool:
+        """Returns negation of original and edited metadata comparison. If `true`, than they are same (new metadata is saved)"""
+        return self.metaFileData == self.metaFileDataEdited
 
 class DataTree(QTreeView):
     """Archive tree-like representation"""
@@ -266,8 +273,14 @@ class DataTree(QTreeView):
         self.dataEditor.setCurrentPath(path)
 
     def currentChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
+
+        if not self.dataEditor.isNewMetaDataSaved():
+            criticalWarning = QMessageBox.critical(self, "Save your changes!", "You have edited metadata, but not saved them. Do you want to save?", buttons=QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel, defaultButton=QMessageBox.StandardButton.Save)
+            if criticalWarning == QMessageBox.StandardButton.Save:
+                self.dataEditor.forceSave()
+
         def getAllPaths(current: QModelIndex) -> str:
-            return os.path.join(getAllPaths(current.parent()), current.data()) if str(type(current.parent().data())) == "<class 'str'>" else current.data()
+            return join(getAllPaths(current.parent()), current.data()) if str(type(current.parent().data())) == "<class 'str'>" else current.data()
             
         if str(type(current.parent().data())) == "<class 'str'>" or str(type(current.data())) == "<class 'str'>":
             self.allPaths = getAllPaths(current)
@@ -359,12 +372,12 @@ class MainWindow(QMainWindow):
             :param str path: Absolute parent path.
             :param QStandardItemModel|QStandardItem parent: Parent item (or item model, like root of all items).
             """
-            dataNames = [data for data in os.listdir(path) if (os.path.isdir(os.path.join(path, data)) or (os.path.isfile(os.path.join(path, data)) and not data.endswith((".meta", ".meta.json"))))]
+            dataNames = [data for data in os.listdir(path) if (isdir(join(path, data)) or (isfile(join(path, data)) and not data.endswith((".meta", ".meta.json"))))]
             for dataName in dataNames:
                 dataObject = QStandardItem(dataName)
                 dataObject.setEditable(False)
-                if os.path.isdir(os.path.join(path, dataName)):
-                    appendNonMeta(os.path.join(path, dataName), dataObject)
+                if isdir(join(path, dataName)):
+                    appendNonMeta(join(path, dataName), dataObject)
                 parent.appendRow(dataObject)
 
         if self.rootPath != "": 
