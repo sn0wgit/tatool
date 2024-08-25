@@ -246,7 +246,7 @@ class DataInfoWidget(QWidget):
         self.saveButton.setDisabled(True)
 
     def isNewMetaDataSaved(self) -> bool:
-        """Returns negation of original and edited metadata comparison. If `true`, than they are same (new metadata is saved)"""
+        """Returns original and edited metadata comparison. If `true`, than they are same (new metadata is saved)"""
         return self.metaFileData == self.metaFileDataEdited
 
 class DataTree(QTreeView):
@@ -372,7 +372,7 @@ class MainWindow(QMainWindow):
             :param str path: Absolute parent path.
             :param QStandardItemModel|QStandardItem parent: Parent item (or item model, like root of all items).
             """
-            dataNames = [data for data in os.listdir(path) if (isdir(join(path, data)) or (isfile(join(path, data)) and not data.endswith((".meta", ".meta.json"))))]
+            dataNames = sorted([data for data in os.listdir(path) if (isdir(join(path, data)) or (isfile(join(path, data)) and not data.endswith((".meta", ".meta.json"))))])
             for dataName in dataNames:
                 dataObject = QStandardItem(dataName)
                 dataObject.setEditable(False)
