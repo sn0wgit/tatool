@@ -1,4 +1,10 @@
 {
-  "drones": "Дроны",
-  "items": "Предметы"
+  "drones": {
+    "name": "Дроны",
+    "description": "Игровые помощники"
+  },
+  "items": {
+    "name": "Предметы",
+    "description": ""
+  }
 }

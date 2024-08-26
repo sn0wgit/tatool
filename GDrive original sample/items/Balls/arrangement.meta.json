@@ -13,5 +13,8 @@
       "name": "easter"
     }
   ],
-  "previous_breadcrumbs": []
+  "breadcrumbs": [
+    "items",
+    "Balls"
+  ]
 }

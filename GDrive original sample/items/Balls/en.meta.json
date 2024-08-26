@@ -1,4 +1,10 @@
 {
-  "default": "Default",
-  "easter": "Easter"
+  "default": {
+    "name": "Default",
+    "description": "Default ball skin"
+  },
+  "easter": {
+    "name": "Easter",
+    "description": "Special ball skin for events"
+  }
 }

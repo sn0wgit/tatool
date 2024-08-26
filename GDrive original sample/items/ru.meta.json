@@ -1,8 +1,26 @@
 {
-  "balls": "Мячи",
-  "drones": "Дроны",
-  "flags": "Флаги",
-  "meteorites": "Метеориты",
-  "mines": "Мины",
-  "overdrives": "Овердрайвы"
+  "balls": {
+    "name": "Мячи",
+    "description": ""
+  },
+  "drones": {
+    "name": "Дроны",
+    "description": ""
+  },
+  "flags": {
+    "name": "Флаги",
+    "description": ""
+  },
+  "meteorites": {
+    "name": "Метеориты",
+    "description": "Специальная механика золотых ящиков для ивентов"
+  },
+  "mines": {
+    "name": "Мины",
+    "description": ""
+  },
+  "overdrives": {
+    "name": "Овердрайвы",
+    "description": "Внутриигровая механика"
+  }
 }

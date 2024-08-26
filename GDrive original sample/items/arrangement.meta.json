@@ -7,7 +7,7 @@
       "name": "balls"
     },
     {
-      "type": "explorer.item",
+      "type": "explorer.folder",
       "preview": false,
       "url": "./Drones/",
       "name": "drones"
@@ -37,5 +37,7 @@
       "name": "overdrives"
     }
   ],
-  "previous_breadcrumbs": []
+  "breadcrumbs": [
+    "items"
+  ]
 }

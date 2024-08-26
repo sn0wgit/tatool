@@ -1,3 +1,6 @@
 {
-  "kargo": "Kargo-drone"
+  "kargo": {
+    "name": "Kargo-drone",
+    "description": "Used for supplies delivery on maps"
+  }
 }

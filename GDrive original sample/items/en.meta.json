@@ -1,8 +1,26 @@
 {
-  "balls": "Balls",
-  "drones": "Drones",
-  "flags": "Flags",
-  "meteorites": "Meteorites",
-  "mines": "Mines",
-  "overdrives": "Overdrives"
+  "balls": {
+    "name": "Balls",
+    "description": ""
+  },
+  "drones": {
+    "name": "Drones",
+    "description": ""
+  },
+  "flags": {
+    "name": "Flags",
+    "description": ""
+  },
+  "meteorites": {
+    "name": "Meteorites",
+    "description": "Gold box special mechanics for events"
+  },
+  "mines": {
+    "name": "Mines",
+    "description": ""
+  },
+  "overdrives": {
+    "name": "Overdrives",
+    "description": "In-game mechanics"
+  }
 }

@@ -1,5 +1,14 @@
 {
-  "bomb": "N2-Bomb",
-  "generator": "Protective Shield Generator",
-  "icicle": "Icicle"
+  "bomb": {
+    "name": "N2-Bomb",
+    "description": "Wasp overdrive"
+  },
+  "generator": {
+    "name": "Protective Shield Generator",
+    "description": "Titan overdrive"
+  },
+  "icicle": {
+    "name": "Icicle",
+    "description": "Tactic crusader icicle overdrive"
+  }
 }

@@ -1,4 +1,10 @@
 {
-  "drones": "Drones",
-  "items": "Items"
+  "drones": {
+    "name": "Drones",
+    "description": "Game assistants"
+  },
+  "items": {
+    "name": "Items",
+    "description": ""
+  }
 }

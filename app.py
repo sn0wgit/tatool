@@ -1,11 +1,12 @@
+import datetime
 import sys
 import os
 from os.path import isfile, isdir, relpath, abspath, basename, join
 import json
 from PyQt6.QtSvgWidgets import QSvgWidget
 from PyQt6.QtCore import QSize, QModelIndex, Qt
-from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction, QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit, QMessageBox
+from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction, QPixmap, QResizeEvent
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QWidget, QPushButton, QVBoxLayout, QGridLayout, QLabel, QPlainTextEdit, QTreeView, QFileDialog, QFormLayout, QComboBox, QLineEdit, QMessageBox, QCheckBox
 
 class PreviewWidget(QWidget):
     """Widget for preview viewing"""
@@ -18,7 +19,8 @@ class PreviewWidget(QWidget):
 
         self.currentPreviewPath = ""
         self.currentPreview = None
-        self.currentPreviewSVG = None
+        self.currentPreviewSVG = QSvgWidget(self.currentPreviewPath, self)
+        self.currentPreviewSVG.adjustSize()
         self.currentPreviewImage = QLabel()
         self.currentPreviewImage.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -39,14 +41,10 @@ class PreviewWidget(QWidget):
             self.currentPreviewLabel.setText(basename(self.currentPreviewPath))
             if self.currentPreviewPath.endswith(".svg"):
                 self.currentPreviewImage.setHidden(True)
-                self.currentPreviewSVG = QSvgWidget(self.currentPreviewPath, self)
-                self.currentPreviewSVG.adjustSize()
-                self.currentPreviewSVG.setStyleSheet("margin: auto;")
                 self.currentPreviewSVG.setHidden(False)
 
             else:
-                if isinstance(self.currentPreviewSVG, QSvgWidget):
-                    self.currentPreviewSVG.setHidden(True)
+                self.currentPreviewSVG.setHidden(True)
                 self.currentPreview = QPixmap(self.currentPreviewPath)
                 self.currentPreviewImage.setPixmap(self.currentPreview)
                 self.currentPreviewImage.setHidden(False)
@@ -66,7 +64,10 @@ class DataInfoWidget(QWidget):
         self.rootPath = ""
         self.metaFile = None
         self.LANGS = ["en", "ru"]
-        self.EXPLORER_TYPES = ['explorer.folder', 'explorer.item', 'explorer.variation', 'explorer.jpg', 'explorer.png', 'explorer.svg', 'explorer.webp', 'explorer.a3d', 'explorer.3ds']
+        self.EXPLORER_TYPES = [
+            'explorer.folder', 'explorer.item', 'explorer.variation', 'explorer.jpg', 'explorer.png',
+            'explorer.svg', 'explorer.webp', 'explorer.a3d', 'explorer.3ds'
+        ]
         self.currentLanguage = ""
         self.metaFileData:dict = {}
         self.metaFileDataEdited:dict = {}
@@ -124,7 +125,7 @@ class DataInfoWidget(QWidget):
             )[0] or None
         
         if absolutePreviewPath != None:
-            PreviewWidget.setPreviewPath(self.previewWidget, absolutePreviewPath)
+            self.previewWidget.setPreviewPath(absolutePreviewPath)
             preview = relpath(
                 absolutePreviewPath,
                 start=self.currentPath
@@ -132,8 +133,6 @@ class DataInfoWidget(QWidget):
 
             if isdir(self.currentPath):
                 preview = "./"+preview
-        
-            
 
         else:
             preview = None
@@ -236,7 +235,13 @@ class DataInfoWidget(QWidget):
 
             except:
                 print("Unavaiable to get metadata!\nReason: Metafile is invalid JSON")
-                QMessageBox.warning(self, "Unavaiable to get metadata!", "Unavaiable to get metadata!\nReason: Metafile is invalid JSON", buttons=QMessageBox.StandardButton.Ok, defaultButton=QMessageBox.StandardButton.Ok)
+                QMessageBox.warning(
+                    self,
+                    "Unavaiable to get metadata!",
+                    "Unavaiable to get metadata!\nReason: Metafile is invalid JSON",
+                    buttons=QMessageBox.StandardButton.Ok,
+                    defaultButton=QMessageBox.StandardButton.Ok
+                )
 
                 self.metaFileData = {}
                 self.metaFileDataEdited = {}
@@ -254,20 +259,24 @@ class DataInfoWidget(QWidget):
             self.predictDataType()
             self.i18nnameInput.setText(basename(self.currentPath))
 
-        os.chdir(self.currentPath)
+        if isdir(self.currentPath):
+            os.chdir(self.currentPath)
+        elif isfile(self.currentPath):
+            os.chdir(self.currentPath[:-len(basename(self.currentPath))-1])
+        else:
+            raise Exception("Nothing to refer. Seems like you deleted archive data.")
+        
         if self.metaFileData.get("preview", None) != False and self.metaFileData.get("preview", None) != None:
-            PreviewWidget.setPreviewPath(
-                self.previewWidget,
+            self.previewWidget.setPreviewPath(
                 abspath(
-                    self.metaFileData.get("preview", "") if not self.metaFileData.get("preview", "").startswith("./") else self.metaFileData.get("preview", "")[2:]
+                        self.metaFileData.get("preview", "")
+                        if not self.metaFileData.get("preview", "").startswith("./")
+                        else self.metaFileData.get("preview", "")[2:]
                 )
             )
             
         else:
-            PreviewWidget.setPreviewPath(
-                self.previewWidget,
-                None
-            )
+            self.previewWidget.setPreviewPath(None)
 
         self.setLanguageDependedDatas()
 
@@ -344,7 +353,13 @@ class DataTree(QTreeView):
     def currentChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
 
         if not self.dataEditor.isNewMetaDataSaved():
-            criticalWarning = QMessageBox.critical(self, "Save your changes!", "You have edited metadata, but not saved them. Do you want to save?", buttons=QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel, defaultButton=QMessageBox.StandardButton.Save)
+            criticalWarning = QMessageBox.critical(
+                self,
+                "Save your changes!",
+                "You have edited metadata, but not saved them. Do you want to save?",
+                buttons= QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel,
+                defaultButton=QMessageBox.StandardButton.Save
+            )
             if criticalWarning == QMessageBox.StandardButton.Save:
                 self.dataEditor.forceSave()
 
@@ -355,8 +370,8 @@ class DataTree(QTreeView):
             self.allPaths = getAllPaths(current)
             self.setDataPath(self.allPaths)
 
-class DataEditorPage(QWidget):
-    """Data editor tab"""
+class MetametadataEditorPage(QWidget):
+    """Metadata editor tab"""
     def __init__(self):
         super().__init__()
         
@@ -380,55 +395,220 @@ class DataEditorPage(QWidget):
 
         :param str path: Absolute path to archive root."""
         self.files.setRootPath(path) # Root update for tree
-        self.dataEditor.setRootPath(path) # Root update for data editor
+        self.dataEditor.setRootPath(path) # Root update for metadata editor
 
 class CompilerPage(QWidget):
     """Compiler tab"""
-    def __init__(self):
+    def __init__(self, metadataEditorPage: MetametadataEditorPage):
         super().__init__()
 
         self.output = ""
+        self.APP_DIRECTORY = os.getcwd()
+        self.metadataEditorPage = metadataEditorPage
+
+
         self.compileButton = QPushButton("Compile!")
+        self.compileButton.setDisabled(True)
+        self.compileButton.clicked.connect(self.compileButtonHandler)
+
+
         self.compileNote = QLabel("Note: it will overwrite all previous data in .meta.json files!")
+
+
+        self.dumpLogsToggle = QCheckBox()
+
+        self.dumpLogsLabel = QLabel("Dump logs to file")
+
+        self.dumpLogForm = QWidget()
+        self.dumpLogFormLayout = QFormLayout()
+        self.dumpLogFormLayout.addRow(self.dumpLogsToggle, self.dumpLogsLabel)
+        self.dumpLogForm.setLayout(self.dumpLogFormLayout)
+
         self.compileLogs = QPlainTextEdit(self.output)
+        self.compileLogs.setPlaceholderText("Logs")
         self.compileLogs.setStyleSheet("font-family: monospace;")
         self.compileLogs.setReadOnly(True)
-        self.compileLogs.setFixedHeight(463)
         
+
         self.layout_ = QVBoxLayout()
+        self.layout_.addWidget(self.compileButton, alignment = Qt.AlignmentFlag.AlignCenter)
+        self.layout_.addWidget(self.compileNote, 0)
+        self.layout_.addWidget(self.dumpLogForm)
+        self.layout_.addWidget(self.compileLogs, 0)
         self.setLayout(self.layout_)
 
-        self.layout_.addWidget(self.compileButton, 0)
-        self.layout_.addWidget(self.compileNote, 0)
-        self.layout_.addWidget(self.compileLogs, 0)
+    def log(self, *args) -> None:
+        """Simpilfies to log compiler actions.
+        
+        :param *args: Any arguments can be passed"""
+        log = ""
+        for argindx, arg in enumerate(args):
+            if argindx != 0:
+                log += " "
+            log += str(arg)
+
+        print(self.output)
+
+        if self.output == "":
+            self.output  = str(datetime.datetime.now()).replace(":", "-")[:19]
+        self.output += "\n" + log
+
+        self.compileLogs.setPlainText(self.output)
+
+    def setRootPath(self, path:str, setDiabled=False):
+        """Method for root path updates.
+
+        :param str path: Absolute path to archive root.
+        :param bool setDiabled: Sets if "Compile" button will be disabled."""
+        self.rootPath = path
+        self.compileButton.setDisabled(setDiabled)
+
+    def compileButtonHandler(self):
+        """Starts compilation from archive root folder."""
+
+        if not self.metadataEditorPage.dataEditor.isNewMetaDataSaved():
+            criticalWarning = QMessageBox.critical(
+                self,
+                "Save your changes!",
+                "You want to compile archive, but you have unsaved new metadata.\nDo you want to save it and then compile?",
+                buttons= QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Abort | QMessageBox.StandardButton.Discard,
+                defaultButton=QMessageBox.StandardButton.Save
+            )
+            if criticalWarning == QMessageBox.StandardButton.Save:
+                self.metadataEditorPage.dataEditor.forceSave()
+                
+                self.compile(self.rootPath)
+                if self.dumpLogsToggle.isChecked():
+                    currentDate = str(datetime.datetime.now()).replace(":", "-")[:19]
+                    dump = open(join(self.APP_DIRECTORY, f"{currentDate}.log"), "w")
+                    dump.write(self.output)
+                    dump.close()
+
+            elif criticalWarning == QMessageBox.StandardButton.Cancel:
+                self.compile(self.rootPath)
+                if self.dumpLogsToggle.isChecked():
+                    currentDate = str(datetime.datetime.now()).replace(":", "-")[:19]
+                    dump = open(join(self.APP_DIRECTORY, f"{currentDate}.log"), "w")
+                    dump.write(self.output)
+                    dump.close()
+
+    def compile(self, CURRENT_DIRECTORY:str) -> None:
+        """Inspects all `.meta` files and creates on them based `*.meta.json` files.
+        `*` are "arrangement" and all language codes, which where found inside CURRENT_DIRECTORY `.meta` files.
+        
+        :param str CURRENT_DIRECTORY: Current directory to inspect. If contains any directory, than used
+        recursion and `CURRENT_DIRECTORY` becomes to `CURRENT_DIRECTORY` subdirectories"""
+        self.log("Current directory:", CURRENT_DIRECTORY.replace(self.rootPath, "")+"/")
+
+        directoryMetafiles:list[str] = sorted(
+            [
+                content
+                for content
+                in os.listdir(CURRENT_DIRECTORY)
+                if isfile(join(CURRENT_DIRECTORY, content))
+                and content.endswith(".meta")
+            ]
+        )
+        currentArrangement:dict[
+            str, list[
+                dict[
+                    str, str|bool|None
+                ]
+                |
+                str
+            ]
+        ] = {"content": [], "breadcrumbs": []}
+        allTranslations:dict = {}
+
+        for metafile in directoryMetafiles:
+
+            arrangementForCurrentData:dict[str, str|bool|None] = {}
+
+            currentMetafile = open(join(CURRENT_DIRECTORY, metafile), "r")
+            currentMetafileJSONized:dict[str, str|bool|None] = json.loads(currentMetafile.read())
+            currentMetafile.close()
+
+            typeFromMetafile:str = currentMetafileJSONized.get("type")                    # type: ignore
+            previewFromMetafile:str|bool|None = currentMetafileJSONized.get("preview", None)
+            URLFromMetafile:str = currentMetafileJSONized.get("url")                      # type: ignore
+            namei18nFromMetafile:str = currentMetafileJSONized.get("namei18n")            # type: ignore
+
+            arrangementForCurrentData.update({"type": typeFromMetafile})
+            arrangementForCurrentData.update({"preview": previewFromMetafile})
+            arrangementForCurrentData.update({"url": URLFromMetafile})
+            arrangementForCurrentData.update({"name": namei18nFromMetafile})
+
+            languageCodes = [key[:2] for key in currentMetafileJSONized.keys() if key.endswith("Desc")]
+            for languageCode in languageCodes:
+                if allTranslations.get(languageCode, {}) == {}:
+                    allTranslations.update({languageCode: {namei18nFromMetafile: {}}})
+                nameAndDescription = {}
+                nameAndDescription.update({"name": currentMetafileJSONized.get(languageCode+"Name", "")})
+                nameAndDescription.update({"description": currentMetafileJSONized.get(str(languageCode+"Desc"), "")})
+                allTranslations[languageCode][namei18nFromMetafile] = nameAndDescription
+
+            currentArrangement["content"].append(arrangementForCurrentData)
+
+        if currentArrangement != {"content": [], "breadcrumbs": []}:
+
+            if CURRENT_DIRECTORY.replace(self.rootPath, "")[1:] == "":
+                currentArrangement["breadcrumbs"] = []
+            else: 
+                currentArrangement["breadcrumbs"] = [dir for dir in CURRENT_DIRECTORY.replace(self.rootPath, "")[1:].split(sep="/")]
+
+            currentArrangementFile = open(join(CURRENT_DIRECTORY, "arrangement.meta.json"), "w")
+            json.dump(currentArrangement, currentArrangementFile, indent=2, ensure_ascii=False)
+            currentArrangementFile.close()
+
+            self.log(f'"{CURRENT_DIRECTORY.replace(self.rootPath, "")}/arrangement.meta.json" created!')
+
+            for language in allTranslations.keys():
+
+                current_translation_file = open(join(CURRENT_DIRECTORY, language+".meta.json"), "w")
+                json.dump(allTranslations[language], current_translation_file, indent=2, ensure_ascii=False)
+                currentArrangementFile.close()
+
+                self.log(f'"{CURRENT_DIRECTORY.replace(self.rootPath, "")}/{language}.meta.json" created!')
+
+        for directory in sorted(
+            [
+                directory
+                for directory
+                in os.listdir(CURRENT_DIRECTORY)
+                if os.path.isdir(join(CURRENT_DIRECTORY, directory))
+            ]
+        ):
+            self.compile(join(CURRENT_DIRECTORY, directory))
 
 class MainWindow(QMainWindow):
     """Application window"""
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("TATool") # Заголовок окна
-        self.setFixedSize(QSize(800, 600)) # Размер окна
+        self.setWindowTitle("TATool")
+        self.setMinimumSize(QSize(800, 600))
         self.rootPath = ""
 
         menu = self.menuBar()
-        if menu != None: fileMenu = menu.addMenu("&File") # Первый дроплист верхнего бара
+        if menu != None: fileMenu = menu.addMenu("&File")
 
-        openArchiveButton = QAction("&Open archive", self) # Первая кнопка первого дроплиста из верхнего бара
-        openArchiveButton.setStatusTip("Select archive root folder") # Описание для статусбара
-        openArchiveButton.triggered.connect(self.onOpenArchiveButtonClick) # Дефинирование обработчика нажатий
+        openArchiveButton = QAction("&Open archive", self)
+        openArchiveButton.setStatusTip("Select archive root folder")
+        openArchiveButton.triggered.connect(self.onOpenArchiveButtonClick)
 
         self.setStatusBar(QStatusBar(self)) # Статусбар (внизу)
-        if fileMenu != None: fileMenu.addAction(openArchiveButton) # Добавление первой кнопки
+        if fileMenu != None: fileMenu.addAction(openArchiveButton)
 
-        self.dataEditorPage = DataEditorPage()
-        self.compilerPage = CompilerPage()
-
+        self.metadataEditorPage = MetametadataEditorPage()
+        self.compilerPage = CompilerPage(self.metadataEditorPage)
         self.tabWidget = QTabWidget(self)
         self.tabWidget.move(0, 19)
-        self.tabWidget.resize(800, 561)
-        self.tabWidget.addTab(self.dataEditorPage, "Data Editor")
+        self.tabWidget.resize(self.width(), self.height()-39)
+        self.tabWidget.addTab(self.metadataEditorPage, "Metadata Editor")
         self.tabWidget.insertTab(1, self.compilerPage, "Compiler")
+
+    def resizeEvent(self, a0: QResizeEvent | None) -> None:
+        self.tabWidget.resize(self.width(), self.height()-39)
 
     def onOpenArchiveButtonClick(self) -> None:
         """Archive folder selection handler"""
@@ -440,7 +620,19 @@ class MainWindow(QMainWindow):
             :param str path: Absolute parent path.
             :param QStandardItemModel|QStandardItem parent: Parent item (or item model, like root of all items).
             """
-            dataNames = sorted([data for data in os.listdir(path) if (isdir(join(path, data)) or (isfile(join(path, data)) and not data.endswith((".meta", ".meta.json"))))])
+            dataNames = sorted(
+                [
+                    data
+                    for data
+                    in os.listdir(path)
+                    if (
+                        isdir(join(path, data)) or (
+                            isfile(join(path, data)) and
+                            not data.endswith((".meta", ".meta.json"))
+                        )
+                    )
+                ]
+            )
             for dataName in dataNames:
                 dataObject = QStandardItem(dataName)
                 dataObject.setEditable(False)
@@ -449,8 +641,10 @@ class MainWindow(QMainWindow):
                 parent.appendRow(dataObject)
 
         if self.rootPath != "": 
-            appendNonMeta(self.rootPath, self.dataEditorPage.model) # Fills tree
-            self.dataEditorPage.setRootPath(self.rootPath) # Updates root path
+            appendNonMeta(self.rootPath, self.metadataEditorPage.model) # Fills tree
+
+            self.metadataEditorPage.setRootPath(self.rootPath)
+            self.compilerPage.setRootPath(self.rootPath)
 
 def main():
     app = QApplication(sys.argv)

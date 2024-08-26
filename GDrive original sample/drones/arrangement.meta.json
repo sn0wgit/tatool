@@ -7,5 +7,7 @@
       "name": "miner"
     }
   ],
-  "previous_breadcrumbs": []
+  "breadcrumbs": [
+    "drones"
+  ]
 }
