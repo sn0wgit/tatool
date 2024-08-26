@@ -463,7 +463,7 @@ class CompilerPage(QWidget):
         self.rootPath = path
         self.compileButton.setDisabled(setDiabled)
 
-    def compileButtonHandler(self):
+    def compileButtonHandler(self) -> None:
         """Starts compilation from archive root folder."""
 
         if not self.metadataEditorPage.dataEditor.isNewMetaDataSaved():
@@ -476,21 +476,16 @@ class CompilerPage(QWidget):
             )
             if criticalWarning == QMessageBox.StandardButton.Save:
                 self.metadataEditorPage.dataEditor.forceSave()
-                
-                self.compile(self.rootPath)
-                if self.dumpLogsToggle.isChecked():
-                    currentDate = str(datetime.datetime.now()).replace(":", "-")[:19]
-                    dump = open(join(self.APP_DIRECTORY, f"{currentDate}.log"), "w")
-                    dump.write(self.output)
-                    dump.close()
 
-            elif criticalWarning == QMessageBox.StandardButton.Cancel:
-                self.compile(self.rootPath)
-                if self.dumpLogsToggle.isChecked():
-                    currentDate = str(datetime.datetime.now()).replace(":", "-")[:19]
-                    dump = open(join(self.APP_DIRECTORY, f"{currentDate}.log"), "w")
-                    dump.write(self.output)
-                    dump.close()
+            elif criticalWarning == QMessageBox.StandardButton.Abort or criticalWarning == QMessageBox.StandardButton.Escape:
+                return None
+        
+        self.compile(self.rootPath)
+        if self.dumpLogsToggle.isChecked():
+            currentDate = str(datetime.datetime.now()).replace(":", "-")[:19]
+            dump = open(join(self.APP_DIRECTORY, f"{currentDate}.log"), "w")
+            dump.write(self.output)
+            dump.close()
 
     def compile(self, CURRENT_DIRECTORY:str) -> None:
         """Inspects all `.meta` files and creates on them based `*.meta.json` files.
