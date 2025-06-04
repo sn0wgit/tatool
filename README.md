@@ -14,9 +14,9 @@ pip install PyQt6
 
 User selects root directory and program starts to index all directories and files, that does not end with `.meta` or `.meta.json`. Program automatically suggests data types and unique data names. After you saved all metadata, than you can compile them by single button click on second program tab.
 
-### Metadata Editor
+### Editor
 
-Metadata Editor lets you edit metadata for any data you choose (_that does not end with `.meta` or `.meta.json`_). You input its name for further _i18n_ translations, its own translations, such as name and description (only English and Russian are supported now), and selects entry type from the data type list. Program overwrites `${original_file_or_directory_name}.meta` file in parent directory and will use it at Compiler tab.
+Editor lets you edit metadata for any data you choose (it should not end with `.meta` or `.meta.json`). You input its name for further _i18n_ translations, its own translations, such as name and description (only English and Russian as constant are supported for now), and select entry type from the data type list. Program overwrites `${original_file_or_directory_name}.meta` file in parent directory and will use it at Compiler tab.
 
 ### Compiler
 

@@ -27,11 +27,13 @@ class DataInfoWidget(QWidget):
         self.setLayout(self.form)
 
         self.saveButton = QPushButton("Save")
+        self.saveButton.setStatusTip("Apply changes")
         self.saveButton.setDisabled(True)
         self.saveButton.clicked.connect(self.forceSave)
 
         self.previewLabel = QLabel("Preview:")
         self.previewButton = QPushButton("Select file...")
+        self.previewButton.setStatusTip("Select image for this object")
         self.previewButton.clicked.connect(self.updatePreviewImage)
         self.form.addRow(self.previewLabel, self.previewButton)
 
@@ -43,23 +45,28 @@ class DataInfoWidget(QWidget):
             self.typeSelection.addItem(type)
         self.typeSelection.addItem("")
         self.typeSelection.setCurrentText("")
+        self.typeSelection.setStatusTip("Select static type of the object")
 
         self.i18nnameLabel = QLabel("i18nName:")
         self.i18nnameInput = QLineEdit()
+        self.i18nnameInput.setStatusTip("Input unique name of object (it will be used as variable name) to connect the object and translations")
         self.i18nnameInput.textChanged.connect(self.i18nNameChangeHandler)
         self.form.addRow(self.i18nnameLabel, self.i18nnameInput)
 
         self.currentLanguageSelection = QComboBox()
+        self.currentLanguageSelection.setStatusTip("Select a language to edit translations of the object in this language")
         self.currentLanguageSelection.currentIndexChanged.connect(self.currentLanguageChangeHandler)
         self.form.addWidget(self.currentLanguageSelection)
 
         self.nameLabel = QLabel("Name:")
         self.nameInput = QLineEdit()
+        self.nameInput.setStatusTip("Object name (used in user language-based the object image)")
         self.nameInput.textChanged.connect(self.nameChangeHandler)
         self.form.addRow(self.nameLabel, self.nameInput)
 
         self.descLabel = QLabel("Description:")
         self.descInput = QLineEdit()
+        self.descInput.setStatusTip("Object description (more detail text about the object used in user language-based image)")
         self.descInput.textChanged.connect(self.descriptionChangeHandler)
         self.form.addRow(self.descLabel, self.descInput)
         self.form.addWidget(self.saveButton)

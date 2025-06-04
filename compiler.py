@@ -5,7 +5,7 @@ from os.path import isfile, join
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel, QPlainTextEdit, QFormLayout, QMessageBox, QCheckBox
 
-from metadataEditor import MetadataEditorTab
+from editor import MetadataEditorTab
 
 class CompilerTab(QWidget):
     """Compiler tab"""
@@ -13,7 +13,7 @@ class CompilerTab(QWidget):
         super().__init__()
 
         self.output = ""
-        self.APP_DIRECTORY = os.getcwd()
+        self.APP_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
         self.metadataEditorPage = metadataEditorPage
 
 
@@ -21,13 +21,15 @@ class CompilerTab(QWidget):
         self.compileButton.setDisabled(True)
         self.compileButton.clicked.connect(self.compileButtonHandler)
 
-
         self.compileNote = QLabel("Note: it will overwrite all previous data in .meta.json files!")
 
 
         self.dumpLogsToggle = QCheckBox()
+        self.dumpLogsToggle.setStatusTip("Logs will be saved in program home directory in format YYYY-MM-DD hh-mm-ss.log")
 
         self.dumpLogsLabel = QLabel("Dump logs to file")
+        self.dumpLogsLabel.setStatusTip("Logs will be saved in program home directory in format YYYY-MM-DD hh-mm-ss.log")
+
 
         self.dumpLogForm = QWidget()
         self.dumpLogFormLayout = QFormLayout()
@@ -51,18 +53,15 @@ class CompilerTab(QWidget):
         """Simpilfies to log compiler actions.
         
         :param *args: Any arguments can be passed"""
-        log = ""
+        logText = str(datetime.datetime.now()).replace(":", "-")[:19]
         for argindx, arg in enumerate(args):
             if argindx != 0:
-                log += " "
-            log += str(arg)
+                logText += " "
+            logText += str(arg)
 
         print(self.output)
 
-        if self.output == "":
-            self.output  = str(datetime.datetime.now()).replace(":", "-")[:19]
-        self.output += "\n" + log
-
+        self.output += "\n" + logText
         self.compileLogs.setPlainText(self.output)
 
     def setRootPath(self, path:str, setDiabled=False):

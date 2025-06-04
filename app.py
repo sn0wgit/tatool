@@ -3,10 +3,12 @@ import os
 from os.path import isfile, isdir, join
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction, QResizeEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QFileDialog, QMenuBar, QMenu
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QFileDialog, QMenuBar, QMenu, QMessageBox
 
-from metadataEditor import MetadataEditorTab
+from editor import MetadataEditorTab
 from compiler import CompilerTab
+
+VERSION: str = "1.1"
 
 class MainWindow(QMainWindow):
     """Application window"""
@@ -18,7 +20,11 @@ class MainWindow(QMainWindow):
         self.rootPath = ""
 
         menu = self.menuBar()
-        if isinstance(menu, QMenuBar): fileMenu = menu.addMenu("&File")
+        if isinstance(menu, QMenuBar):
+            fileMenu = menu.addMenu("&File")
+            aboutButton = menu.addAction("About")
+            aboutButton.setStatusTip("About TATool")
+            aboutButton.triggered.connect(self._aboutDialog)
 
         openArchiveButton = QAction("&Open archive", self)
         openArchiveButton.setStatusTip("Select archive root folder")
@@ -31,16 +37,20 @@ class MainWindow(QMainWindow):
         self.compilerPage = CompilerTab(self.metadataEditorPage)
         self.tabWidget = QTabWidget(self)
         self.tabWidget.move(0, 19)
-        self.tabWidget.resize(self.width(), self.height()-39)
-        self.tabWidget.addTab(self.metadataEditorPage, "Metadata Editor")
+        self.tabWidget.resize(self.width(), self.height() - 39)
+        self.tabWidget.addTab(self.metadataEditorPage, "Editor")
         self.tabWidget.insertTab(1, self.compilerPage, "Compiler")
 
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
-        self.tabWidget.resize(self.width(), self.height()-39)
+        self.tabWidget.resize(self.width(), self.height() - 39)
 
     def onOpenArchiveButtonClick(self) -> None:
         """Archive folder selection handler"""
-        self.rootPath = QFileDialog.getExistingDirectory()
+        self.rootPath = QFileDialog.getExistingDirectory(
+            self,
+            "Select archive",
+            os.path.dirname(os.path.abspath(__file__))
+        )
 
         def appendNonMeta(path:str, parent:QStandardItemModel|QStandardItem) -> None:
             """Loop method to get all archive data, except of `.meta` and `.meta.json` files
@@ -73,6 +83,17 @@ class MainWindow(QMainWindow):
 
             self.metadataEditorPage.setRootPath(self.rootPath)
             self.compilerPage.setRootPath(self.rootPath)
+
+    def _aboutDialog(self):
+        """The 'About program' dialog popup"""
+        dialog = QMessageBox.about(
+            self,
+            "About TATool",
+            "Proprietary software, made for \"Tanki Online #Archive\" team.\n"
+            "Version: "+VERSION+". License: WTFPL\n"
+            "Project on GitHub: https://github.com/sn0wgit/tatool/"
+        )
+
 
 def main():
     app = QApplication(sys.argv)
