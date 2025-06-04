@@ -3,7 +3,7 @@ import os
 from os.path import isfile, isdir, join
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QStandardItem, QStandardItemModel, QAction, QResizeEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget, QFileDialog, QMenuBar, QMenu
 
 from metadataEditor import MetadataEditorTab
 from compiler import CompilerTab
@@ -18,14 +18,14 @@ class MainWindow(QMainWindow):
         self.rootPath = ""
 
         menu = self.menuBar()
-        if menu != None: fileMenu = menu.addMenu("&File")
+        if isinstance(menu, QMenuBar): fileMenu = menu.addMenu("&File")
 
         openArchiveButton = QAction("&Open archive", self)
         openArchiveButton.setStatusTip("Select archive root folder")
         openArchiveButton.triggered.connect(self.onOpenArchiveButtonClick)
 
         self.setStatusBar(QStatusBar(self)) # Статусбар (внизу)
-        if fileMenu != None: fileMenu.addAction(openArchiveButton)
+        if isinstance(fileMenu, QMenu): fileMenu.addAction(openArchiveButton)
 
         self.metadataEditorPage = MetadataEditorTab()
         self.compilerPage = CompilerTab(self.metadataEditorPage)
